@@ -320,6 +320,7 @@ body.view-time #days{display:none}
 .tblock.col-i360{background:var(--i360-bg);border-left-color:var(--i360)}.tblock.col-udes{background:var(--udes-bg);border-left-color:var(--udes)}.tblock.col-horbach{background:var(--horbach-bg);border-left-color:var(--horbach)}.tblock.col-privat{background:var(--privat-bg);border-left-color:var(--privat)}
 .tblock.col-c1{background:var(--c1-bg);border-left-color:var(--c1)}.tblock.col-c2{background:var(--c2-bg);border-left-color:var(--c2)}.tblock.col-c3{background:var(--c3-bg);border-left-color:var(--c3)}.tblock.col-c4{background:var(--c4-bg);border-left-color:var(--c4)}.tblock.col-c5{background:var(--c5-bg);border-left-color:var(--c5)}.tblock.col-c6{background:var(--c6-bg);border-left-color:var(--c6)}
 .tblock.moving{opacity:.85;box-shadow:var(--shadow);z-index:5}
+.tblock.out{position:fixed;width:180px;pointer-events:none;z-index:60}
 .tsel{position:absolute;left:3px;right:3px;background:color-mix(in srgb,var(--accent) 22%,transparent);border:1px dashed var(--accent);border-radius:5px;pointer-events:none;font:600 11px var(--f-mono);color:var(--accent);padding:2px 6px;box-sizing:border-box}
 .tnow{position:absolute;left:0;right:0;border-top:2px solid var(--warn);pointer-events:none;z-index:4}
 .tnow::before{content:"";position:absolute;left:-4px;top:-4px;width:6px;height:6px;border-radius:50%;background:var(--warn)}
@@ -1035,15 +1036,18 @@ window.addEventListener('pointermove',function(e){if(!tg||e.pointerId!==tg.pid)r
   else if(tg.kind==='resize'){var nb=Math.max(tg.a+15,tg.b+dm);tg.nb=nb;var keep=tg.b;tg.b=nb;tDraw();tg.b=keep;}
   else{var len=tg.b-tg.a;var na=Math.max(TH0*60,Math.min(TH1*60-len,tg.a+dm));tg.na=na;tg.el.classList.add('moving');
     var el=document.elementFromPoint(e.clientX,e.clientY);var c2=el&&el.closest('.tcol');if(c2&&c2!==tg.el.parentNode){c2.append(tg.el);tg.slot=c2.dataset.tcol;}
-    var ka=tg.a,kb=tg.b;tg.a=na;tg.b=na+len;tDraw();tg.a=ka;tg.b=kb;}
+    var dl2=el&&!c2?el.closest('[data-drop]'):null;document.querySelectorAll('.list.hot').forEach(function(x){if(x!==dl2)x.classList.remove('hot');});if(dl2)dl2.classList.add('hot');
+    var ka=tg.a,kb=tg.b;tg.a=na;tg.b=na+len;tDraw();tg.a=ka;tg.b=kb;
+    var gr=$('#tgrid').getBoundingClientRect();var outside=e.clientX<gr.left||e.clientX>gr.right||e.clientY<gr.top||e.clientY>gr.bottom;tg.el.classList.toggle('out',outside);if(outside){tg.el.style.left=(e.clientX-40)+'px';tg.el.style.top=(e.clientY-12)+'px';tg.el.style.height='';}else{tg.el.style.left='';}}
   var edge=60;if(e.clientY<edge)scrollBy(0,-8);else if(e.clientY>innerHeight-edge)scrollBy(0,8);},{passive:false});
-function tEnd(e,commit){if(!tg||(e&&e.pointerId!==tg.pid))return;var t=tg;tg=null;clearTimeout(t.hold);if(t.sel)t.sel.remove();if(t.el)t.el.classList.remove('moving');
+function tEnd(e,commit){if(!tg||(e&&e.pointerId!==tg.pid))return;var t=tg;tg=null;clearTimeout(t.hold);document.querySelectorAll('.list.hot').forEach(function(x){x.classList.remove('hot');});if(t.sel)t.sel.remove();if(t.el){t.el.classList.remove('moving');t.el.classList.remove('out');t.el.style.left='';}
   if(!t.armed){if(t.kind!=='new'&&!t.moved)openEditor(t.id);return;}
   if(!commit){renderTime();return;}
   if(t.kind==='new'){var a=Math.min(t.a,t.b),b=Math.max(t.a,t.b);if(b-a<15)b=a+30;if(!t.moved)b=a+60;
     openEditor(null,{slots:[t.slot]});$('#ed-time').value=tfmt(a);$('#ed-end').value=tfmt(b);$('#ed-allday').checked=false;timeVis();return;}
   if(!t.moved){openEditor(t.id);return;}
   var it=S.items.get(t.id);if(!it){renderTime();return;}
+  if(t.kind==='move'&&e){var pe=document.elementFromPoint(e.clientX,e.clientY),dl=pe&&pe.closest('[data-drop]');if(dl&&!pe.closest('.tcol')){var ds=dl.dataset.drop,dp={slot:ds,order:endOrder(ds,t.id)};if(dl.dataset.area!==undefined&&dl.dataset.area!=='')dp.area=dl.dataset.area;patchItem(t.id,dp);toast(ds==='vorrat'?'In die Ablage gelegt.':'Verschoben auf '+slotLabel(ds)+'.');return;}}
   if(t.kind==='resize'&&t.nb!==undefined){patchItem(t.id,{end:tfmt(t.nb)});}
   else if(t.kind==='move'&&t.na!==undefined){var len=t.b-t.a;var patch={time:tfmt(t.na),end:tfmt(t.na+len)};if(t.slot!==it.slot){patch.slot=t.slot;patch.order=orderForNew(t.slot,patch.time,it.id);}patchItem(t.id,patch);}
   else renderTime();}
