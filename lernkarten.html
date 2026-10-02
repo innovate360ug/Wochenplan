@@ -581,10 +581,11 @@ function remove(id){S.cards.delete(id);if(!sb||!user)return;run('Löschen',funct
 function mergeRows(cards,prog){var m=new Map();var pm={};(prog||[]).forEach(function(p){pm[p.card_id]=p;});
   (cards||[]).forEach(function(r){var c=norm(r.id,r);var p=pm[r.id];if(p){PROG_KEYS.forEach(function(k){c[k]=p[k]==null?c[k]:p[k];});c.due=+c.due||0;c.ease=+c.ease||2.5;}m.set(c.id,c);});return m;}
 function load(){if(!sb||!user)return Promise.resolve();
+  var slow=setTimeout(function(){if(!loaded){var st=$('stage');if(st.querySelector('.empty'))st.innerHTML='<div class="empty">Laden dauert ungewöhnlich lange. Falls die Tabellen in Supabase noch fehlen, bitte lernkarten.sql ausführen. <br><button class="btn ghost" type="button" onclick="location.reload()" style="margin-top:10px">Neu laden</button></div>';}},8000);
   return Promise.all([sb.from('lern_cards').select('*'),sb.from('lern_progress').select('*').eq('user_id',user.id)]).then(function(rs){
-    if(rs[0].error)throw rs[0].error;if(rs[1].error)throw rs[1].error;
+    clearTimeout(slow);if(rs[0].error)throw rs[0].error;if(rs[1].error)throw rs[1].error;
     if(pending)return;var m=mergeRows(rs[0].data,rs[1].data);S.cards=m;loaded=true;mode='live';offline=false;setStatus();refresh();},
-  function(e){var t=String(e&&e.message||e);if(/Failed to fetch|NetworkError|Load failed/i.test(t)){offline=true;}else toast('Laden ging nicht: '+t.slice(0,80));mode='live';setStatus();if(!loaded){loaded=true;refresh();}});}
+  function(e){clearTimeout(slow);var t=String(e&&e.message||e);if(/Failed to fetch|NetworkError|Load failed/i.test(t)){offline=true;}else{toast('Laden ging nicht: '+t.slice(0,80));if(/lern_cards|lern_progress|does not exist|schema cache/i.test(t)){$('stage').innerHTML='<div class="empty">Die Tabellen fehlen noch in Supabase. Bitte einmal <b>lernkarten.sql</b> im SQL Editor ausführen und die Seite neu laden.<br><span class="hint">'+esc(t)+'</span></div>';loaded=true;mode='live';setStatus();return;}}mode='live';setStatus();if(!loaded){loaded=true;refresh();}});}
 var reloadT=null;function scheduleReload(){clearTimeout(reloadT);reloadT=setTimeout(function(){if(!pending)load();else scheduleReload();},400);}
 function connect(){disconnect();load();
   chan=sb.channel('lern-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'lern_cards'},scheduleReload)
@@ -775,7 +776,7 @@ $('auth-pw').addEventListener('keydown',function(e){if(e.key==='Enter')authActio
 $('logout').onclick=function(){sb.auth.signOut();};
 $('pw-form').addEventListener('submit',function(e){e.preventDefault();var np=$('pw-new').value;if(np.length<6)return;
   sb.auth.updateUser({password:np}).then(function(r){toast(r.error?'Passwort konnte nicht gesetzt werden.':'Passwort gesetzt.');$('pwmodal').hidden=true;});});
-function enterSession(u){$('auth-pw').value='';if(user&&user.id===u.id)return;user=u;S.cards=new Map();S.started=false;loaded=false;mode='loading';setStatus();showAuth(false);renderCard();connect();}
+function enterSession(u){$('auth-pw').value='';if(user&&user.id===u.id)return;user=u;S.cards=new Map();S.started=false;loaded=false;mode='loading';setStatus();showAuth(false);renderCard();setTimeout(connect,0);}
 function leaveSession(){disconnect();authMsg('');user=null;S.cards=new Map();S.started=false;loaded=false;mode='auth';setStatus();renderCard();renderList();showAuth(true);}
 
 /* ---------- Start ---------- */
