@@ -20,7 +20,7 @@
   --accent:#0F5E63; --accent-ink:#FFFFFF; --accent-soft:#D4E6E5;
   --i360:#4B48A8; --i360-bg:#E6E5F6; --udes:#8E5B0D; --udes-bg:#F4E8D2; --horbach:#8B3C86; --horbach-bg:#F4E2F1; --privat:#2D7348; --privat-bg:#DDEEE2;
   --c1:#1F6FB2; --c1-bg:#E1EDF9; --c2:#B2531B; --c2-bg:#F8E7DB; --c3:#5F6E10; --c3-bg:#EDF1D3; --c4:#B0304F; --c4-bg:#F8E0E6; --c5:#4B5A66; --c5-bg:#E4E9ED; --c6:#7A4E2D; --c6-bg:#F1E6DC;
-  --warn:#A33A2A; --warn-bg:#F6E1DC; --shadow:0 10px 28px rgba(16,32,29,.22);
+  --warn:#A33A2A; --warn-bg:#F6E1DC; --free-bg:#E2EBE3; --busy-bg:#EEE8D6; --full-bg:#EEDAD6; --shadow:0 10px 28px rgba(16,32,29,.22);
   --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -30,13 +30,13 @@
   --accent:#5BC0BE; --accent-ink:#0B1413; --accent-soft:#17312F;
   --i360:#B0AEF2; --i360-bg:#27264A; --udes:#E5B566; --udes-bg:#3A2D14; --horbach:#E7A9E1; --horbach-bg:#3B2039; --privat:#84CFA0; --privat-bg:#173222;
   --c1:#8DC0F2; --c1-bg:#142E47; --c2:#F2A272; --c2-bg:#3D2313; --c3:#C5D46E; --c3-bg:#283009; --c4:#F193AB; --c4-bg:#3F1520; --c5:#B4C2CD; --c5-bg:#232C33; --c6:#D9AE8A; --c6-bg:#36251A;
-  --warn:#F2917D; --warn-bg:#3A1C16; --shadow:0 10px 28px rgba(0,0,0,.55); color-scheme:dark}}
+  --warn:#F2917D; --warn-bg:#3A1C16; --free-bg:#1F2B25; --busy-bg:#2B2818; --full-bg:#30201D; --shadow:0 10px 28px rgba(0,0,0,.55); --free-bg:#1F2B25; --busy-bg:#2B2818; --full-bg:#30201D; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#101513; --surface:#1A201E; --sunk:#151B19; --ink:#E3EAE6; --muted:#94A39D; --line:#2B3431;
   --accent:#5BC0BE; --accent-ink:#0B1413; --accent-soft:#17312F;
   --i360:#B0AEF2; --i360-bg:#27264A; --udes:#E5B566; --udes-bg:#3A2D14; --horbach:#E7A9E1; --horbach-bg:#3B2039; --privat:#84CFA0; --privat-bg:#173222;
   --c1:#8DC0F2; --c1-bg:#142E47; --c2:#F2A272; --c2-bg:#3D2313; --c3:#C5D46E; --c3-bg:#283009; --c4:#F193AB; --c4-bg:#3F1520; --c5:#B4C2CD; --c5-bg:#232C33; --c6:#D9AE8A; --c6-bg:#36251A;
-  --warn:#F2917D; --warn-bg:#3A1C16; --shadow:0 10px 28px rgba(0,0,0,.55); color-scheme:dark}
+  --warn:#F2917D; --warn-bg:#3A1C16; --free-bg:#1F2B25; --busy-bg:#2B2818; --full-bg:#30201D; --shadow:0 10px 28px rgba(0,0,0,.55); --free-bg:#1F2B25; --busy-bg:#2B2818; --full-bg:#30201D; color-scheme:dark}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -161,13 +161,19 @@ details.more textarea{width:100%;margin-top:8px;border:1px solid var(--line);bor
 .sidetpl .mini{cursor:grab;touch-action:none;border-style:dashed}
 .sidehint{font-size:11px;color:var(--muted)}
 .day{background:var(--sunk);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
-.day.today{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
+.day.today{box-shadow:inset 0 0 0 2px var(--accent)}
 .dhead{display:flex;align-items:center;gap:6px;min-width:0}
 .dtoggle{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;border:0;background:none;padding:0;text-align:left;color:inherit}
 .dn{font:700 20px/1 var(--f-display)}
 .dd{font-family:var(--f-mono);font-size:13px;color:var(--muted)}
 .dc{margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .day.today .dn{color:var(--accent)}
+.lock{flex:none;height:24px;min-width:24px;padding:0 6px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:12px;line-height:1;cursor:pointer}
+.lock:hover{border-color:var(--warn);color:var(--warn)}
+.lock.on{background:var(--warn);border-color:var(--warn);color:#fff;font-weight:600;letter-spacing:.03em}
+.day.d-free{background:var(--free-bg)}.day.d-busy{background:var(--busy-bg)}.day.d-full{background:var(--full-bg)}
+.day.d-full .plus{opacity:.5}
+.thead .th.d-free{background:var(--free-bg)}.thead .th.d-busy{background:var(--busy-bg)}.thead .th.d-full{background:var(--full-bg)}
 .todaytag{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;background:var(--accent);color:var(--accent-ink);padding:2px 6px;border-radius:4px}
 .plus{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0;font-size:18px;line-height:1;color:var(--ink)}
 .plus:hover{border-color:var(--accent);color:var(--accent)}
@@ -387,6 +393,7 @@ body.view-time #days{display:none}
         <div>Schnellfeld versteht: <code>Zahnarzt Mo 14:30 1h #privat @ki</code>. Tasten: <b>N</b> neu, <b>←</b> <b>→</b> Woche, <b>H</b> heute, <b>Z</b> Ansicht.</div>
         <div><b>Rechtsklick</b> auf einen Eintrag: Erledigt, auf heute, Ablage, Löschen. Am Handy: Eintrag gedrückt halten und loslassen, dann erscheint dasselbe Menü. Halten und ziehen verschiebt.</div>
         <div><b>Vorlagen:</b> unter „Aufgaben je Bereich“ pro Bereich eintragen (eine pro Zeile). Sie erscheinen im Fenster unter „Was“ und in der Seitenleiste zum Ziehen.</div>
+        <div><b>Tagesfarbe:</b> grün = frei, gelb = belegt, rot = voll. Rot setzt du selbst mit <b>○</b> neben dem Tag. Nochmal antippen öffnet den Tag wieder.</div>
         <div><b>⚙</b> neben den Filtern: Bereiche umbenennen, löschen, anlegen.</div>
         <div><b>+</b> am Tag: Termin oder Aufgabe anlegen. Bei neuen Einträgen gehen mehrere Tage auf einmal (Mo–Fr, jeden Tag oder einzelne Tage).</div>
         <div>Uhrzeit mit von–bis, oder ganztägig. Ganztägiges steht oben im Tag, darunter kannst du normal weiter eintragen.</div>
@@ -600,8 +607,9 @@ function norm(id,v){v=v||{};return {id:id,title:typeof v.title==='string'?v.titl
 function norm4(a){var f=Array.isArray(a)?a.slice(0,4):[];while(f.length<4)f.push('');return f.map(function(x){return typeof x==='string'?x.slice(0,200):'';});}
 function normWeek(v){v=v||{};var by={};if(Array.isArray(v.by))v.by.forEach(function(e){if(e&&typeof e.a==='string')by[e.a]=norm4(e.f);});
   var hb={};if(v.habits&&typeof v.habits==='object')Object.keys(v.habits).forEach(function(k){var a=v.habits[k];if(Array.isArray(a))hb[k]=a.slice(0,7).map(function(x){return !!x;});});
-  return {focus:norm4(v.focus),by:by,habits:hb,skip:typeof v.skip==='string'?v.skip:''};}
-function weekData(){var by=[];Object.keys(S.week.by).forEach(function(k){var f=S.week.by[k];if(f.some(function(x){return x;}))by.push({a:k,f:f.slice()});});var hb={};Object.keys(S.week.habits).forEach(function(k){if(S.week.habits[k].some(function(x){return x;}))hb[k]=S.week.habits[k].slice();});return {focus:S.week.focus.slice(),by:by,habits:hb,skip:S.week.skip};}
+  var full=(Array.isArray(v.full)?v.full:[]).filter(function(x){return typeof x==='string'&&isDate(x);});
+  return {focus:norm4(v.focus),by:by,habits:hb,full:full,skip:typeof v.skip==='string'?v.skip:''};}
+function weekData(){var by=[];Object.keys(S.week.by).forEach(function(k){var f=S.week.by[k];if(f.some(function(x){return x;}))by.push({a:k,f:f.slice()});});var hb={};Object.keys(S.week.habits).forEach(function(k){if(S.week.habits[k].some(function(x){return x;}))hb[k]=S.week.habits[k].slice();});return {focus:S.week.focus.slice(),by:by,habits:hb,full:(S.week.full||[]).slice(),skip:S.week.skip};}
 function body(it){return {title:it.title,note:it.note,area:it.area,mode:it.mode,slot:it.slot,order:it.order,done:it.done,allday:it.allday,time:it.time,end:it.end,model:it.model,updated:it.updated};}
 function match(it){return S.filter==='all'||it.area===S.filter;}
 function itemsIn(slot){var a=[];S.items.forEach(function(it){if(it.slot===slot)a.push(it);});a.sort(function(x,y){return (x.allday?0:1)-(y.allday?0:1)||x.order-y.order||x.updated-y.updated;});return a;}
@@ -749,9 +757,10 @@ function render(){
     var isToday=s===S.today,past=s<S.today;
     var ta={class:'dtoggle',dataset:{day:s}};if(past){ta.type='button';ta['aria-expanded']=S.expanded[s]?'true':'false';}
     var toggle=h(past?'button':'div',ta,h('span',{class:'dn',text:DAYN[i]}),h('span',{class:'dd',text:fmtD(d)}),isToday?h('span',{class:'todaytag',text:'heute'}):null,h('span',{class:'dc',text:b.total?(b.total-b.open)+'/'+b.total:''}));
+    var st=dayState(s);var lock=S.readonly?null:h('button',{class:'lock'+(st==='full'?' on':''),type:'button',dataset:{lock:s},'aria-pressed':st==='full'?'true':'false','aria-label':st==='full'?slotLabel(s)+' wieder öffnen':slotLabel(s)+' als voll markieren',title:st==='full'?'Tag ist voll. Antippen: wieder öffnen':'Tag als voll markieren'},st==='full'?'Voll':'○');
     var plus=S.readonly?null:h('button',{class:'plus',type:'button',dataset:{plus:s},'aria-label':'Eintrag am '+slotLabel(s)+' anlegen',title:'Termin oder Aufgabe anlegen'},'+');
     var bar=b.total?h('div',{class:'dbar'},(function(){var x=h('b');x.style.width=Math.round((b.total-b.open)/b.total*100)+'%';return x;})()):null;
-    days.push(h('section',{class:'day'+(isToday?' today':'')+(past?' past':'')+(S.expanded[s]?' expanded':''),id:'col-'+s},h('div',{class:'dhead'},toggle,plus),bar,h('div',{class:'collapsible'},b.nodes)));});
+    days.push(h('section',{class:'day d-'+st+(isToday?' today':'')+(past?' past':'')+(S.expanded[s]?' expanded':''),id:'col-'+s},h('div',{class:'dhead'},toggle,lock,plus),bar,h('div',{class:'collapsible'},b.nodes)));});
   var daysEl=$('#days');daysEl.replaceChildren.apply(daysEl,days);
 
   $('#stats').replaceChildren.apply($('#stats'),allAreas().filter(function(a){return stats[a.name].t;}).map(function(a){return h('span',{class:'stat'},h('span',{class:'tag col-'+a.color,text:a.name}),h('b',{text:stats[a.name].d+'/'+stats[a.name].t}));}));
@@ -819,7 +828,7 @@ document.addEventListener('keydown',function(e){if(e.ctrlKey||e.metaKey||e.altKe
   else if(k==='h'){goWeek(mondayOf(parseD(S.today)));}else if(k==='z'){setView(S.view==='time'?'list':'time');}});
 function readWeek(key){return new Promise(function(res){if(!db){res(normWeek(localWeeks[key]));return;}
   var p=db.doc('weeks/'+key).get();p.then(function(sn){var v=sn&&sn.exists?sn.data():{};res(normWeek(v||{}));},function(){res(null);});});}
-function writeWeekDoc(key,w){var data={focus:w.focus.slice(),by:[],habits:{},skip:w.skip,updated:stamp()};Object.keys(w.by).forEach(function(k){if(w.by[k].some(function(x){return x;}))data.by.push({a:k,f:w.by[k].slice()});});
+function writeWeekDoc(key,w){var data={focus:w.focus.slice(),by:[],habits:{},full:(w.full||[]).slice(),skip:w.skip,updated:stamp()};Object.keys(w.by).forEach(function(k){if(w.by[k].some(function(x){return x;}))data.by.push({a:k,f:w.by[k].slice()});});
   Object.keys(w.habits||{}).forEach(function(k){if(w.habits[k].some(function(x){return x;}))data.habits[k]=w.habits[k].slice();});
   if(db){var path='weeks/'+key,e={kind:'set',stamp:data.updated,done:false,doneAt:0};pend.set(path,e);track(path,e,queue(path,function(){return db.doc(path).set(data);}));}else{localWeeks[key]=data;saveLocal();}}
 function carryFocus(pairs){flushWeek();var key=weekKey(addDays(S.weekStart,7));var label='KW '+isoWeek(addDays(S.weekStart,7)).w;
@@ -999,7 +1008,7 @@ function renderTime(){if(S.view!=='time')return;tRange();var ws=weekSlots(),days
   var td=$('#tdays');td.replaceChildren();if(!wk){ws.forEach(function(s,i){td.append(h('button',{class:'chip',type:'button',dataset:{tday:s},'aria-pressed':s===days[0]?'true':'false'},DAYN[i]+' '+fmtD(parseD(s)).slice(0,5)+(s===S.today?' ·':'')));});}
   var head=$('#thead');head.className='thead'+(wk?' week':'');head.replaceChildren(h('div'));
   days.forEach(function(s){var i=ws.indexOf(s);var others=itemsIn(s).filter(function(it){return match(it)&&!it.done&&!it.time;});
-    var th=h('div',{class:'th'+(s===S.today?' today':'')},h('b',{text:DAYN[i]+' '+fmtD(parseD(s))}),h('span',{class:'plus',style:'float:right;width:24px;height:24px;font-size:15px',dataset:{plus:s},title:'Eintrag anlegen'},'+'));
+    var st2=dayState(s);var th=h('div',{class:'th d-'+st2+(s===S.today?' today':'')},h('b',{text:DAYN[i]+' '+fmtD(parseD(s))}),h('span',{class:'plus',style:'float:right;width:24px;height:24px;font-size:15px',dataset:{plus:s},title:'Eintrag anlegen'},'+'),S.readonly?null:h('button',{class:'lock'+(st2==='full'?' on':''),type:'button',style:'float:right;margin-right:4px',dataset:{lock:s},'aria-pressed':st2==='full'?'true':'false',title:st2==='full'?'Tag ist voll. Antippen: wieder öffnen':'Tag als voll markieren'},st2==='full'?'Voll':'○'));
     if(others.length){var tl=h('div',{class:'tl'});others.slice(0,wk?3:8).forEach(function(it){tl.append(card(it));});if(others.length>(wk?3:8))tl.append(h('span',{style:'font-size:11px;color:var(--muted)',text:'+'+(others.length-(wk?3:8))+' weitere in der Liste'}));th.append(tl);}
     head.append(th);});
   var g=$('#tgrid');g.className='tgrid'+(wk?' week':'');g.replaceChildren();
@@ -1109,6 +1118,11 @@ function tplSave(name,text){var a=findArea(name);if(!a)return;var tpl=[];text.sp
 var tplT=null;
 document.addEventListener('input',function(e){var t=e.target;if(!t.dataset||!t.dataset.tpl)return;clearTimeout(tplT);tplT=setTimeout(function(){tplSave(t.dataset.tpl,t.value);},800);});
 document.addEventListener('focusout',function(e){var t=e.target;if(t&&t.dataset&&t.dataset.tpl){clearTimeout(tplT);tplSave(t.dataset.tpl,t.value);requestRender();}});
+/* Tagesfarbe: frei / belegt / voll */
+function isFull(s){return !!(S.week&&S.week.full&&S.week.full.indexOf(s)>=0);}
+function dayState(s){if(isFull(s))return 'full';var n=0;S.items.forEach(function(it){if(it.slot===s&&!it.done)n++;});return n?'busy':'free';}
+function toggleFull(s){if(!S.week||S.readonly)return;var f=S.week.full||[];var i=f.indexOf(s);if(i>=0)f.splice(i,1);else f.push(s);S.week.full=f;scheduleWeekSave();render();toast(i>=0?slotLabel(s)+': wieder offen.':slotLabel(s)+': als voll markiert.');}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-lock]');if(!b)return;e.preventDefault();e.stopPropagation();toggleFull(b.dataset.lock);},true);
 function modelVis(){var v=currentMode();$('#ed-model-wrap').hidden=!(v==='zus'||v==='ki');}
 function timeVis(){$('#ed-times').hidden=$('#ed-allday').checked;}
 function addMin(t,m){var p=t.split(':').map(Number);var x=p[0]*60+p[1]+m;if(x>=24*60)x=24*60-1;return pad(Math.floor(x/60))+':'+pad(x%60);}
