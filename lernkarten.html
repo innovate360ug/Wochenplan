@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2f5d62">
+<link rel="icon" href="icon.png">
+<title>Horbach Lernstapel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: schmale Lernheft-Spalte; oben Reiter Lernen / Karten / Aufschriebe; Karte als Stapel in der Mitte, Bearbeiten als Blatt von unten */
+:root{
+  --bg:#f3f4f1; --paper:#fbfbf9; --ink:#1f2a2c; --muted:#5d6a6b; --line:#d7dcd8;
+  --accent:#2f5d62; --accent-soft:#e0eae9; --marker:#f6dc6b; --marker-ink:#4a3b00;
+  --fix:#2f7a4f; --warn:#a4532b; --warn-soft:#f6e6dc;
+  --p1:#b0304f; --p1-bg:#f8e0e6; --p2:#2f5d62; --p2-bg:#e0eae9; --p3:#6b6f5a; --p3-bg:#ecebe2;
+  --shadow:0 10px 28px rgba(16,32,29,.22);
+  --f-read:"Literata", Georgia, "Times New Roman", serif;
+  --f-ui:"IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#151b1c; --paper:#1d2526; --ink:#e4e9e6; --muted:#9aa8a7; --line:#33403f;
+  --accent:#8fc0c3; --accent-soft:#25393b; --marker:#6b5a12; --marker-ink:#fff3c2;
+  --fix:#7ccf9c; --warn:#e3a07c; --warn-soft:#3a2a21;
+  --p1:#f193ab; --p1-bg:#3f1520; --p2:#8fc0c3; --p2-bg:#25393b; --p3:#c3c4ad; --p3-bg:#2e2f26;
+  --shadow:0 10px 28px rgba(0,0,0,.55); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#151b1c; --paper:#1d2526; --ink:#e4e9e6; --muted:#9aa8a7; --line:#33403f;
+  --accent:#8fc0c3; --accent-soft:#25393b; --marker:#6b5a12; --marker-ink:#fff3c2;
+  --fix:#7ccf9c; --warn:#e3a07c; --warn-soft:#3a2a21;
+  --p1:#f193ab; --p1-bg:#3f1520; --p2:#8fc0c3; --p2-bg:#25393b; --p3:#c3c4ad; --p3-bg:#2e2f26;
+  --shadow:0 10px 28px rgba(0,0,0,.55); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-read);font-size:16px;line-height:1.6;padding-inline:16px;padding-block:0 64px}
+button,input,select,textarea{font:inherit;color:inherit}
+.wrap{max-width:720px;margin:0 auto}
+header{padding-block:24px 4px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 16px}
+header .t{flex:1;min-width:220px}
+.eyebrow{font-family:var(--f-ui);text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--muted)}
+h1{font-size:30px;line-height:1.15;margin:2px 0 0;text-wrap:balance}
+.status{font-family:var(--f-ui);font-size:13px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.status i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.status.live i{background:var(--fix)} .status.local i{background:var(--warn)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;padding-block:12px 10px;border-bottom:1px solid var(--line);margin-bottom:18px}
+nav button{font-family:var(--f-ui);font-size:15px;font-weight:600;border:1px solid var(--line);background:var(--paper);padding:7px 14px;border-radius:999px;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.banner{font-family:var(--f-ui);font-size:14px;background:var(--warn-soft);border-radius:6px;padding:8px 12px;margin-bottom:14px}
+
+/* gemeinsame Bausteine */
+.btn{font-family:var(--f-ui);font-size:15px;font-weight:600;border-radius:6px;padding:9px 15px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--paper)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.plain{background:transparent;border-color:var(--line);color:var(--ink);font-weight:500}
+.btn.danger{background:transparent;border-color:transparent;color:var(--warn);padding-left:0}
+.btn:disabled{opacity:.45;cursor:default}
+.linkbtn{font-family:var(--f-ui);font-size:14px;background:none;border:none;color:var(--accent);cursor:pointer;padding:0;font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-ui);font-size:13px;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 11px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
+.hint{font-family:var(--f-ui);font-size:13px;color:var(--muted)}
+.pr{font-family:var(--f-ui);font-size:12px;font-weight:600;letter-spacing:.03em;border-radius:4px;padding:1px 7px;white-space:nowrap;border:1px solid transparent}
+.pr.p1{background:var(--p1-bg);color:var(--p1)} .pr.p2{background:var(--p2-bg);color:var(--p2)} .pr.p3{background:var(--p3-bg);color:var(--p3)}
+button.pr{cursor:pointer} button.pr:hover{border-color:currentColor}
+
+/* Lernen */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.stat b{display:block;font-family:var(--f-mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-family:var(--f-ui);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.filters{display:grid;gap:8px;margin-bottom:12px}
+.frow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.frow>.lbl{font-family:var(--f-ui);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;width:56px}
+.progress{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-bottom:14px}
+.progress div{height:100%;background:var(--accent);width:0;transition:width .3s}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:22px;min-height:300px;display:flex;flex-direction:column;gap:14px;box-shadow:0 1px 0 var(--line),0 8px 24px -16px rgba(0,0,0,.25)}
+.ctop{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 10px;align-items:center;font-family:var(--f-ui);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.ctop .l{display:flex;gap:8px;align-items:center}
+.ctype{color:var(--accent);font-weight:600}
+.cq{font-size:20px;line-height:1.4;font-weight:600;text-wrap:balance}
+.ca{border-top:1px dashed var(--line);padding-top:12px}
+.ca ul,.ca ol,.md ul,.md ol{margin:4px 0;padding-left:22px}
+.md p{margin:4px 0}
+.rate{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.rate button{font-family:var(--f-ui);font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.rate button small{font-family:var(--f-mono);font-weight:400;font-size:11px;color:var(--muted)}
+.rate button:hover{border-color:var(--accent)}
+.rate button.sug{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.blank{font-family:var(--f-read);font-size:17px;border:none;border-bottom:2px solid var(--accent);background:transparent;width:9.5em;max-width:100%;padding:0 2px}
+.blank.ok{border-color:var(--fix);color:var(--fix)} .blank.no{border-color:var(--warn);color:var(--warn)}
+.cloze{font-size:18px;line-height:2}
+.order{display:grid;gap:6px}
+.order button{text-align:left;font-family:var(--f-read);font-size:16px;border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:8px 12px;cursor:pointer;display:flex;gap:10px}
+.order button b{font-family:var(--f-mono);font-size:13px;min-width:20px;color:var(--accent)}
+.order button.ok{border-color:var(--fix)} .order button.no{border-color:var(--warn)}
+.order button:disabled{cursor:default}
+textarea,.in{font-family:var(--f-read);font-size:16px;width:100%;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:9px 10px}
+textarea{min-height:96px;resize:vertical}
+.ai{background:var(--accent-soft);border-radius:6px;padding:10px 12px;font-family:var(--f-ui);font-size:14px}
+.ai b{color:var(--accent)}
+.cfoot{border-top:1px solid var(--line);padding-top:8px;display:flex;flex-wrap:wrap;gap:6px 16px}
+.cfoot .linkbtn{font-weight:500}
+.note-in{display:grid;gap:6px}
+.done{text-align:center;padding:36px 10px;align-items:center;justify-content:center}
+.done h2{margin:0}
+.empty{text-align:center;padding:30px 16px;border:1px dashed var(--line);border-radius:10px;font-family:var(--f-ui);color:var(--muted)}
+
+/* Karten-Liste */
+.ltools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.ltools .in{flex:1;min-width:180px;font-family:var(--f-ui);font-size:15px}
+.grp{margin-bottom:18px}
+.grp h2{font-size:18px;margin:0 0 4px}
+.grp h3{font-family:var(--f-ui);font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:10px 0 2px}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--line)}
+.row .q{cursor:pointer;min-width:0;overflow-wrap:anywhere;font-size:15px;line-height:1.35}
+.row .q:hover{color:var(--accent)}
+.row .m{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
+.row .m .nt{color:var(--warn)}
+
+/* Blatt */
+.modal{position:fixed;inset:0;z-index:80;background:rgba(10,16,14,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.sheet{background:var(--paper);border-radius:12px;width:min(620px,100%);max-height:calc(100% - 16px);overflow:auto;box-shadow:var(--shadow);padding:18px;display:grid;gap:14px}
+@media (max-width:600px){.modal{align-items:flex-end;padding:0}.sheet{border-radius:14px 14px 0 0;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px))}}
+.sheet h2{margin:0;font-size:22px}
+.field{display:grid;gap:4px}
+.field>label{font-family:var(--f-ui);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.two{grid-template-columns:1fr}h1{font-size:25px}.cq{font-size:18px}.card{padding:16px}.rate button{font-size:13px}.stat b{font-size:19px}}
+select.in{font-family:var(--f-ui);font-size:15px}
+.acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.acts .sp{flex:1}
+.prev{font-family:var(--f-ui);font-size:14px;display:grid;gap:4px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:8px}
+.prev div{display:flex;gap:8px;align-items:baseline}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:90;background:var(--ink);color:var(--bg);border-radius:8px;padding:10px 14px;font-family:var(--f-ui);font-size:14px;max-width:calc(100% - 32px);box-shadow:var(--shadow)}
+
+/* Aufschriebe */
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-family:var(--f-ui);font-size:14px;color:var(--muted);align-items:center;margin-bottom:18px}
+.legend label{display:flex;gap:6px;align-items:center;cursor:pointer;color:var(--ink)}
+details.doc{background:var(--paper);border:1px solid var(--line);border-radius:6px;margin-bottom:14px}
+details.doc>summary{cursor:pointer;padding:14px 18px;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+details.doc>summary::-webkit-details-marker{display:none}
+details.doc>summary h2{font-size:20px;margin:0}
+details.doc>summary .meta{font-family:var(--f-ui);font-size:13px;color:var(--muted);white-space:nowrap}
+details.doc[open]>summary{border-bottom:1px solid var(--line)}
+.body{padding:6px 18px 18px}
+.body h3{font-family:var(--f-ui);font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:22px 0 4px}
+.body h4{font-size:16px;margin:14px 0 2px}
+.body p{margin:6px 0}
+.body ul,.body ol{margin:4px 0;padding-left:22px}
+.quote{border-left:3px solid var(--accent);padding:2px 12px;font-style:italic;margin:8px 0}
+.src{font-family:var(--f-ui);font-size:12px;color:var(--muted);background:var(--accent-soft);padding:1px 7px;border-radius:999px;margin-left:6px;font-style:normal;white-space:nowrap}
+.formula{font-family:var(--f-mono);font-size:20px;letter-spacing:.04em}
+ins.fx{text-decoration:underline dotted var(--fix);text-underline-offset:3px;text-decoration-thickness:2px}
+.show-fx ins.fx::after{content:" (" attr(data-o) ")";font-family:var(--f-mono);font-size:12px;color:var(--fix);text-decoration:line-through}
+mark.q{background:var(--marker);color:var(--marker-ink);padding:0 3px;border-radius:2px}
+mark.q::after{content:attr(data-n);font-family:var(--f-mono);font-size:11px;vertical-align:super;margin-left:2px;font-weight:500}
+.note{background:var(--warn-soft);border-radius:4px;padding:8px 12px;font-family:var(--f-ui);font-size:14px;margin:10px 0}
+.note b{color:var(--warn)}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px;font-family:var(--f-ui);font-size:14px}
+.steps span{background:var(--accent-soft);padding:3px 10px;border-radius:4px}
+.steps i{font-style:normal;color:var(--muted);align-self:center}
+.qlist{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px 18px;margin-bottom:22px}
+.qlist h2{font-size:18px;margin:0 0 6px}
+.qlist ol{padding-left:0;list-style:none;margin:0;display:grid;gap:6px}
+.qlist li{display:grid;grid-template-columns:28px 1fr;gap:6px;font-size:15px}
+.qlist li span:first-child{font-family:var(--f-mono);font-size:12px;background:var(--marker);color:var(--marker-ink);border-radius:3px;text-align:center;height:20px;line-height:20px;margin-top:3px}
+.qlist .more{display:none}
+.qlist.open .more{display:grid}
+.fn{font-family:var(--f-ui);font-size:13px;color:var(--muted);margin-top:26px;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion:reduce){.progress div{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="t">
+    <div class="eyebrow">HORBACH · Lernen</div>
+    <h1>Horbach Lernstapel</h1>
+  </div>
+  <span class="status" id="status"><i></i><span>Verbinde …</span></span>
+  <button class="btn plain" id="logout" type="button" style="padding:5px 10px;font-size:13px" hidden>Abmelden</button>
+</header>
+
+<nav role="tablist">
+  <button role="tab" id="t-learn" aria-selected="true" data-p="p-learn">Lernen</button>
+  <button role="tab" id="t-cards" aria-selected="false" data-p="p-cards">Karten</button>
+  <button role="tab" id="t-notes" aria-selected="false" data-p="p-notes">Aufschriebe</button>
+</nav>
+
+<div class="banner" id="offbanner" hidden>Keine Verbindung zum Speicher. Änderungen werden erneut versucht, sobald die Verbindung wieder da ist.</div>
+
+<!-- ============ LERNEN ============ -->
+<section id="p-learn">
+  <div class="stats">
+    <div class="stat"><b id="s-due">–</b><span>Heute fällig</span></div>
+    <div class="stat"><b id="s-new">–</b><span>Neu heute</span></div>
+    <div class="stat"><b id="s-must">–</b><span>Muss sitzt</span></div>
+  </div>
+  <div class="filters">
+    <div class="frow"><span class="lbl">Stapel</span><div class="chips" id="f-deck"></div></div>
+    <div class="frow"><span class="lbl">Prio</span><div class="chips" id="f-prio"></div></div>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <div id="stage"></div>
+  <p class="hint" style="margin-top:14px">Reihenfolge: zuerst fällige Wiederholungen, Muss vor Gut zu wissen vor Kennen, danach neue Karten. Muss-Karten kommen öfter wieder. Neue Karten pro Tag:
+    <select id="newlimit" class="in" style="width:auto;display:inline-block;padding:2px 6px;font-size:13px" aria-label="Neue Karten pro Tag"><option>10</option><option selected>20</option><option>30</option><option>50</option><option value="999">alle</option></select></p>
+</section>
+
+<!-- ============ KARTEN ============ -->
+<section id="p-cards" hidden>
+  <div class="ltools">
+    <input class="in" id="search" type="search" placeholder="Karten durchsuchen …" aria-label="Karten durchsuchen">
+    <button class="btn" id="b-new" type="button">+ Neue Karte</button>
+    <button class="btn ghost" id="b-seed" type="button" hidden>32 Startkarten laden</button>
+    <button class="btn ghost" id="b-imp" type="button">Aus KI einfügen</button>
+  </div>
+  <div class="chips" id="l-prio" style="margin-bottom:12px"></div>
+  <div id="list"></div>
+  <p class="hint">Prio-Etikett antippen ändert die Prio. Frage antippen öffnet die Karte zum Bearbeiten.</p>
+</section>
+
+<!-- ============ AUFSCHRIEBE ============ -->
+<section id="p-notes" hidden>
+
+  <div class="qlist" id="qlist">
+    <h2>Rückfragen an dich</h2>
+    <ol>
+      <li><span>1</span><span><b>TTV:</b> Wofür steht die Abkürzung?</span></li>
+      <li><span>2</span><span><b>GB:</b> Ist das die Grundberatung?</span></li>
+      <li><span>3</span><span><b>Mediziner:</b> Du schreibst „seit 30 Jahren“, auf dem HORBACH-Screenshot steht „seit 40 Jahren“. Was stimmt?</span></li>
+      <li><span>4</span><span><b>Finanzplan-Tool:</b> „Ziele und Wünsche des Kundengewinnung“ – gemeint „der Kunden“?</span></li>
+      <li class="more"><span>5</span><span><b>SV:</b> Sparkassenversicherung?</span></li>
+      <li class="more"><span>6</span><span><b>Freie Makler:</b> „keine Spezifikation“ = keine Spezialisierung? „keine Deckelung“ = keine Provisionsdeckelung?</span></li>
+      <li class="more"><span>7</span><span><b>Säulen-Prinzip:</b> Was ist damit gemeint? Steht nicht im Aufschrieb.</span></li>
+      <li class="more"><span>8</span><span><b>„BV koppeln AV“:</b> BU (Berufsunfähigkeit) gekoppelt an Altersvorsorge?</span></li>
+      <li class="more"><span>9</span><span><b>Koppelvertrag:</b> Welche Punkte sind Vorteile, welche Nachteile? „Stornosicher“ für wen, Kunde oder Anbieter?</span></li>
+      <li class="more"><span>10</span><span><b>Generali-Block:</b> Gehört der zu DVAG? Die DVAG arbeitet nach meinem Wissen überwiegend mit Generali-Produkten. Bitte prüfen.</span></li>
+      <li class="more"><span>11</span><span><b>DVAG:</b> Sind „Werbung, nah am Kunden, Umfeld, Empfehlungen“ deren Stärken?</span></li>
+      <li class="more"><span>12</span><span><b>Lücken:</b> Rest der Konkurrenz-Schulung (Akku leer) und das Foto „Pitch gegen Banken“ fehlen. Hast du Folien oder Fotos?</span></li>
+      <li class="more"><span>13</span><span><b>Kreislauf:</b> Schließt er sich über die Empfehlung, also zurück zur Akquise?</span></li>
+      <li class="more"><span>14</span><span><b>Wortschatz:</b> „Studentenstatus, Lehrerstatus sinnvoll anwenden“ – was ist damit gemeint?</span></li>
+    </ol>
+    <button class="linkbtn" id="qmore">Alle 14 zeigen</button>
+  </div>
+
+  <div class="legend">
+    <span><ins class="fx" data-o="x">korrigiert</ins> = Tippfehler behoben</span>
+    <span><mark class="q" data-n="1">unsicher</mark> = Rückfrage</span>
+    <label><input type="checkbox" id="showfx"> Originalschreibweise zeigen</label>
+  </div>
+
+  <!-- Vertriebskreislauf -->
+  <details class="doc" open>
+    <summary><h2>Vertriebskreislauf</h2><span class="meta">9 Korrekturen · 4 Rückfragen</span></summary>
+    <div class="body">
+      <div class="steps">
+        <span>Akquise</span><i>→</i><span><mark class="q" data-n="1">TTV</mark></span><i>→</i><span><mark class="q" data-n="2">GB</mark></span><i>→</i><span>Dienstleistungs&shy;vorstellung</span><i>→</i><span>Fachliche Themen</span><i>→</i><span>Finanzplan</span><i>→</i><span>Konzept&shy;besprechung</span><i>→</i><span>Abschluss</span><i>→</i><span>Service</span><i>→</i><span>Empfehlung <mark class="q" data-n="13">↺</mark></span>
+      </div>
+
+      <h3><ins class="fx" data-o="Aquise">Akquise</ins></h3>
+      <p><em>Wie komme ich an neue potenzielle Mandanten?</em></p>
+      <ul>
+        <li><b><ins class="fx" data-o="Direktaquise">Direktakquise</ins>:</b> öffentliche Plätze</li>
+        <li><b>Kooperationen:</b> Seminar auf Absolventenfeier</li>
+        <li><b>Online-Neukundengewinnung:</b> <mark class="q" data-n="1">TTV</mark></li>
+      </ul>
+
+      <h3><mark class="q" data-n="1">TTV</mark></h3>
+      <ul>
+        <li>Erster Kontakt mit HORBACH, 5–15 Minuten</li>
+        <li>Wer sind wir und was machen wir?</li>
+        <li>Bezug erklären</li>
+        <li>Was würde die Person in einem Gespräch erwarten?</li>
+        <li>Welche Vorteile bietet das kostenlose Beratungsgespräch?</li>
+        <li>Bestätigung des Gewinnspiels, Abgleich der Daten, echter Mensch → qualifiziert?</li>
+        <li>Zusätzlich zum Gewinnspiel: Chance auf kostenlose Grundberatung bzw. Beratungstermin</li>
+      </ul>
+      <p>„Akademiker-Gewinnspiel“:</p>
+      <p class="quote">„Ausgewählten Akademikern die <ins class="fx" data-o="Chanche">Chance</ins> geben, eine kostenlose Grundberatung zu erhalten.“</p>
+
+      <h3><mark class="q" data-n="2">GB</mark> – „<ins class="fx" data-o="Bestelllungaufnahme">Bestellungsaufnahme</ins> beim Kunden“</h3>
+      <ul>
+        <li>Dauer 1–1,5 h</li>
+        <li>Bestandsanalyse</li>
+        <li>Was sind die Ziele und Wünsche des Kunden?</li>
+        <li>Wo soll es später finanziell hingehen?</li>
+        <li>„Gemeinsam identifizieren, wie unsere Dienstleistung in der Situation des Kunden behilflich sein kann“</li>
+        <li>Bindung und <ins class="fx" data-o="symphatie">Sympathie</ins> aufbauen</li>
+      </ul>
+
+      <h3><ins class="fx" data-o="Dienstleistungsvorstelllung">Dienstleistungsvorstellung</ins></h3>
+      <p>Sagt der Kunde Ja zum Berater und Ja zur Dienstleistung → weiter zu den fachlichen Themen.</p>
+
+      <h3>Fachliche Themen</h3>
+      <ul>
+        <li>Konkret Produkte durchgehen, die in der Situation des Kunden relevant sein könnten</li>
+        <li>Erklären, warum Produkt X in der jeweiligen Lebenssituation Sinn machen kann</li>
+      </ul>
+
+      <h3>Finanzplan wird erstellt</h3>
+      <ul>
+        <li>Aufarbeitung der gesamten finanziellen Situation des Kunden</li>
+        <li>Entsprechende Konzepte werden vorbereitet</li>
+      </ul>
+
+      <h3>Konzeptbesprechung</h3>
+      <ul>
+        <li>Dem Kunden die Empfehlung vorlegen bzw. das Finanzkonzept besprechen</li>
+        <li>Ggf. 2 Optionen dabei</li>
+        <li>Ggf. nachjustieren</li>
+        <li>Kunde bekommt alles schwarz auf weiß und kann eine Nacht drüber schlafen</li>
+      </ul>
+
+      <h3>Abschlusstermin</h3>
+      <p><ins class="fx" data-o="Veträge">Verträge</ins> werden signiert.</p>
+
+      <h3>Service</h3>
+      <ul>
+        <li>1× jährlich</li>
+        <li>Wo stehen wir in Bezug auf die finanziellen Ziele?</li>
+        <li>Portfoliopflege</li>
+        <li>Im Optimalfall: Empfehlung vom Kunden</li>
+      </ul>
+
+      <h3>Formel</h3>
+      <p class="formula">E = Q × A</p>
+      <p>Erfolg = Qualität × Aktivität</p>
+
+      <h3>Wortschatz</h3>
+      <p class="quote">„Als Teil unserer zeitlich begrenzten Marketingaktion geben wir ausgewählten Akademikern die Gelegenheit, unsere Dienstleistung kostenlos <ins class="fx" data-o="kennzulernen">kennenzulernen</ins>.“</p>
+      <p class="quote">„Studentenstatus, Lehrerstatus sinnvoll anwenden“ <mark class="q" data-n="14">?</mark></p>
+      <div class="note"><b>Hinweis:</b> Diesen Aufschrieb hast du zweimal hochgeladen, beide Dateien sind identisch.</div>
+    </div>
+  </details>
+
+  <!-- Unsere Dienstleistung -->
+  <details class="doc">
+    <summary><h2>Unsere Dienstleistung</h2><span class="meta">8 Korrekturen · 2 Rückfragen</span></summary>
+    <div class="body">
+      <p>Wünsche, Ziele, Ansprüche und Verpflichtungen verändern sich im Laufe der Jahre. Darum ist es so wichtig, bei der Finanzplanung von Anfang an auf den richtigen Partner zu setzen: einen, der immer wieder neu daran arbeitet, die besten Angebote zu finden, perfekt angepasst an die jeweilige Lebenssituation.</p>
+
+      <h3>Die Dienstleistung in 4 Schritten <span class="src">aus Screenshot</span></h3>
+      <ol>
+        <li><b>Mein Lebensplan:</b> Das Leben jedes Kunden ist einzigartig. Träume und Pläne des Kunden stehen im Mittelpunkt.</li>
+        <li><b>Mein Finanzplan:</b> passt zu allen Facetten des Lebens; stellt finanzielle Situation, monatliche Einnahmen und Ausgaben und Optimierungsvorschläge transparent dar.</li>
+        <li><b>Best Select:</b> geprüfte, qualitativ hochwertige Lösungen passend zu Bedarf und Anlegermentalität. Externe Expertise, z. B. PIA, Franke &amp; Bornberg.</li>
+        <li><b>Service:</b> persönliche Betreuung. Auf Wunsch alle drei Jahre Aktualisierung des Finanzplans und einmal jährlich ein persönlicher Servicekontakt.</li>
+      </ol>
+
+      <h3>Best-Select: doppelter Prüfprozess <span class="src">aus Screenshot</span></h3>
+      <p>HORBACH wählt für jeden Kunden das passende Produktpaket aus den am Markt erhältlichen Lösungen aller positiv bewerteten Anbieter.</p>
+      <h4>1. Unternehmensanalyse</h4>
+      <p>Produktgeber werden vor Aufnahme ins Portfolio anhand von Unternehmenskennzahlen geprüft, u. a. die <b>Solvabilität</b> (Eigenmittelausstattung). Je höher sie ist, desto besser sind die Ansprüche der Versicherungsnehmer auch bei ungünstigen Entwicklungen gesichert.</p>
+      <h4>2. Produktanalyse</h4>
+      <p>Produkte der positiv bewerteten Anbieter durchlaufen einen Qualitätscheck mit Unterstützung von <b>Franke &amp; Bornberg</b> (analysieren seit 1994 unabhängig). Bei der Altersvorsorge zählt besonders der <b>Rentengarantiefaktor</b>.</p>
+
+      <h3>Beratungskreislauf <span class="src">aus Screenshot</span></h3>
+      <div class="steps">
+        <span>Informationen · persönliches Gespräch</span><i>→</i><span>Persönliche Daten · Datenerfassung</span><i>→</i><span>Persönlicher Finanzplan · Analyse</span><i>→</i><span>Vorsorge &amp; Vermögen · Lösung</span><i>→</i><span>Annahme</span><i>→</i><span>Aktualisierung · Dokumentübergabe · Servicegarantie</span>
+      </div>
+      <p>Ziel: <b>finanzieller Schutz</b> und <b>wirtschaftliche Freiheit</b>.</p>
+
+      <h3>Tools</h3>
+      <ol>
+        <li><b>Videoberatungstool:</b> für den <ins class="fx" data-o="Kunde Ohne">Kunden ohne</ins> Software nutzbar (Sitzungslink per Mail oder Sitzungsnummer per Telefon); Bildschirm kann geteilt werden.</li>
+        <li><b>eSignatur / Fernsignatur:</b> Kunde kann von überall aus unterschreiben.</li>
+        <li><b>Finanzplan:</b> Ziele und Wünsche <mark class="q" data-n="4">des Kundengewinnung</mark>. Online-<ins class="fx" data-o="Anwedung">Anwendung</ins> zur Erfassung von Daten, Zielen und Wünschen. Im Ergebnis <ins class="fx" data-o="enstehen">entstehen</ins> SmartKonzept und Kundendokument. Vernetzung mit dem CRM wird ausgebaut.</li>
+        <li><b>Angebots- und Vergleichssoftware (Tarifübersicht):</b> riesiges Portfolio geprüfter Partner; detaillierter Vergleich der Gesellschaften und Bedingungswerte; Kundendaten, Bedarfsfragen und bestehende Verträge kommen direkt aus dem Finanzplan; vom Vergleich bis zum fertigen Vertrag in einem Tool; Risikoprüfung integriert; dem Kunden wird alles automatisch <ins class="fx" data-o="zugestelllt">zugestellt</ins> (Dokumentationspflicht).</li>
+        <li><b>SmartKonzept – digitales Finanzgutachten:</b> interaktive Verkaufsunterstützung mit Elementen und Grafiken, integrierte Pencil-Selling-Möglichkeit, visualisiert die Kundensituation.</li>
+      </ol>
+
+      <h3>Zielgruppe: Spezialisierung auf Akademiker</h3>
+      <p>Vorteile aus <ins class="fx" data-o="Vetriebssicht">Vertriebssicht</ins>:</p>
+      <ul>
+        <li><b>Gleiche Versorgungsthemen:</b> gesetzliche Renten- und Krankenversicherung, Beamten- und Kammerversorgung</li>
+        <li><b>Einheitlicher Karriereverlauf:</b> Ausbildungs- und Beförderungssystem, Entgeltgruppen und Besoldungstabellen im öffentlichen Dienst, Tarifverträge einzelner Branchen</li>
+        <li><b>Regionaler Bezug:</b> länder- und kammerspezifische Regelungen, spezielles Wissen, eigene Sprache</li>
+      </ul>
+      <h4>Lehrer</h4>
+      <p>Persönlich &amp; kompetent. Unterstützung bereits im Studium → <b>„Der perfekte Start ins Referendariat“</b>:</p>
+      <ul>
+        <li>Die optimale Krankenversicherung</li>
+        <li>Absicherung der Dienst- bzw. Amtshaftpflicht</li>
+        <li>Schutz gegen Dienstunfähigkeit</li>
+        <li>Steuervorteile und staatliche <ins class="fx" data-o="Forderungen">Förderungen</ins></li>
+      </ul>
+      <h4>Mediziner</h4>
+      <p><ins class="fx" data-o="Seid">Seit</ins> <mark class="q" data-n="3">30 Jahren</mark> individuell abgestimmte Beratung in Absicherungs- und Vorsorgefragen. Weitere Bereiche: Vermögensaufbau, Immobilien, Existenzgründungs- und Niederlassungsberatung.</p>
+
+      <h3>Swiss Life</h3>
+      <p>Führender Anbieter von Vorsorge- und Finanzlösungen in Europa, gegründet <b>1857</b>.</p>
+      <p><b>Auftrag</b> <span class="src">aus Screenshot</span>: Unternehmen und Einzelpersonen helfen, finanzielle Risiken frühzeitig zu erkennen und Maßnahmen zu ergreifen. Dank langfristiger, nachhaltiger Kapitalanlage kann Swiss Life Garantieversprechen über Jahrzehnte halten.</p>
+      <p class="quote">„Wir unterstützen Menschen dabei, ein selbstbestimmtes Leben zu führen.“</p>
+      <p><b>Schweizer Werte</b> <span class="src">aus Screenshot</span>: Seriosität, Neutralität, Zuverlässigkeit, Tradition, Qualität, Vertrauen, Wertarbeit.</p>
+
+      <div class="note"><b>Noch nicht zusammengefasst</b> (laut deinem Aufschrieb): Abgrenzung zu anderen Finanzdienstleistern (Selbst managen, Ausschließlichkeit, Allfinanz, Best-Select), Marktumfeld, Beratungsphilosophie (Beratungspyramide), Auszeichnungen.</div>
+    </div>
+  </details>
+
+  <!-- Konkurrenz -->
+  <details class="doc">
+    <summary><h2>Unsere Konkurrenz – und wie wir gewinnen</h2><span class="meta">28.09. · 4 Korrekturen · 7 Rückfragen</span></summary>
+    <div class="body">
+      <p><b>Grundregel:</b> Nie sofort in die Konkurrenzsituation einsteigen. „Ball flach halten.“</p>
+
+      <h3>Banken und Sparkassen</h3>
+      <ul>
+        <li><mark class="q" data-n="5">SV</mark> teuer, R+V ähnlich</li>
+        <li>Kundengewinnung über Konten</li>
+        <li><ins class="fx" data-o="Hauptsächtlcuh eig.">Hauptsächlich eigene</ins> Produkte</li>
+        <li>Pitch gegen Banken <mark class="q" data-n="12">Foto fehlt</mark></li>
+      </ul>
+
+      <h3>Freie Makler</h3>
+      <ul>
+        <li>unabhängig</li>
+        <li>keine <mark class="q" data-n="6">Spezifikation</mark></li>
+        <li>keine <mark class="q" data-n="6">Deckelung</mark></li>
+        <li>→ auf Arbeitsweise und <mark class="q" data-n="7">„Säulen-Prinzip“</mark> eingehen</li>
+      </ul>
+
+      <h3>MLP</h3>
+      <ul>
+        <li>unabhängig, eigene MLP Bank</li>
+        <li><b>Angriffspunkte:</b> Koppelverträge, keine Provisionsdeckelung</li>
+      </ul>
+      <h4>Einschub Koppelvertrag: <mark class="q" data-n="8">BV</mark> gekoppelt an AV</h4>
+      <ul>
+        <li>Bei Rürup steuerlich absetzbar</li>
+        <li><mark class="q" data-n="9">Stornosicher</mark></li>
+        <li>Unflexibel</li>
+        <li>BU <ins class="fx" data-o="Steuerpflichhtig">steuerpflichtig</ins></li>
+        <li>Kosten</li>
+      </ul>
+
+      <h3>DVAG</h3>
+      <ul><li>Werbung</li><li>nah am Kunden</li><li>Umfeld</li><li>Empfehlungen <mark class="q" data-n="11">?</mark></li></ul>
+
+      <h3>Generali <mark class="q" data-n="10">?</mark></h3>
+      <p>Hausrat, Unfall, Haftpflicht, Glas, Reisegepäck – alles gekoppelt.</p>
+
+      <div class="note"><b>Lücke:</b> Akku leer, Rest sollte durch die Folien ergänzt werden. <mark class="q" data-n="12">fehlt</mark></div>
+    </div>
+  </details>
+
+  <p class="fn">Inhaltlich habe ich nichts ergänzt oder umgeschrieben. Texte mit „aus Screenshot“ habe ich aus den Bildern in deinem Dokument abgetippt.</p>
+
+</section>
+</div>
+
+<!-- Karte bearbeiten -->
+<div class="modal" id="ed" hidden>
+  <form class="sheet" id="ed-form" autocomplete="off" role="dialog" aria-modal="true" aria-labelledby="ed-h">
+    <h2 id="ed-h">Karte</h2>
+    <div class="two">
+      <div class="field"><label for="ed-deck">Stapel</label><input class="in" id="ed-deck" list="decks" maxlength="60" required></div>
+      <div class="field"><label for="ed-topic">Thema</label><input class="in" id="ed-topic" list="topics" maxlength="60"></div>
+    </div>
+    <datalist id="decks"></datalist><datalist id="topics"></datalist>
+    <div class="two">
+      <div class="field"><label for="ed-type">Kartentyp</label><select class="in" id="ed-type">
+        <option value="flip">Frage &amp; Antwort</option><option value="cloze">Lückentext</option><option value="order">Reihenfolge</option><option value="explain">Erklären / Auswendig aufsagen</option><option value="case">Fallkarte</option></select></div>
+      <div class="field"><label for="ed-prio">Prio</label><select class="in" id="ed-prio">
+        <option value="1">Muss</option><option value="2">Gut zu wissen</option><option value="3">Kennen</option></select></div>
+    </div>
+    <div class="field"><label for="ed-q">Frage / Aufgabe</label><textarea id="ed-q" rows="2" style="min-height:60px" maxlength="600" required></textarea></div>
+    <div class="field" data-for="flip explain case"><label for="ed-a">Antwort</label><textarea id="ed-a" rows="4" maxlength="3000"></textarea><span class="hint">Liste mit „- “ am Zeilenanfang, fett mit **so**.</span></div>
+    <div class="field" data-for="cloze"><label for="ed-cloze">Lückentext</label><textarea id="ed-cloze" rows="3" maxlength="1500"></textarea><span class="hint">Lücken in doppelte geschweifte Klammern: Das TTV dauert {{5}} bis {{15}} Minuten. Mehrere richtige Antworten mit |: {{einmal|1x}}</span></div>
+    <div class="field" data-for="order"><label for="ed-items">Schritte in richtiger Reihenfolge</label><textarea id="ed-items" rows="5" maxlength="1500"></textarea><span class="hint">Ein Schritt pro Zeile.</span></div>
+    <div class="field"><label for="ed-note">Anmerkung</label><textarea id="ed-note" rows="2" style="min-height:52px" maxlength="1000" placeholder="z. B. Antwort stimmt nicht, mit Coach klären …"></textarea></div>
+    <div class="hint" id="ed-sched"></div>
+    <div class="acts">
+      <button type="button" class="btn danger" id="ed-del">Löschen</button>
+      <button type="button" class="btn plain" id="ed-reset">Lernstand zurücksetzen</button>
+      <span class="sp"></span>
+      <button type="button" class="btn plain" id="ed-cancel">Abbrechen</button>
+      <button type="submit" class="btn">Speichern</button>
+    </div>
+  </form>
+</div>
+
+<!-- Aus KI einfügen -->
+<div class="modal" id="imp" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="imp-h">
+    <h2 id="imp-h">Aus KI einfügen</h2>
+    <div class="field"><label for="imp-deck">Stapel</label><input class="in" id="imp-deck" list="decks" maxlength="60" placeholder="z. B. Unsere Dienstleistung"></div>
+    <ol class="hint" style="margin:0;padding-left:18px">
+      <li>Prompt kopieren und in Claude oder eine andere KI einfügen.</li>
+      <li>Deinen Aufschrieb dazugeben.</li>
+      <li>Die Antwort hier einfügen.</li>
+    </ol>
+    <div><button class="btn plain" id="imp-copy" type="button">Prompt kopieren</button> <span class="hint" id="imp-copymsg"></span></div>
+    <textarea id="imp-text" rows="6" placeholder="Antwort der KI hier einfügen"></textarea>
+    <div id="imp-prev"></div>
+    <div class="acts"><span class="sp"></span><button class="btn plain" id="imp-cancel" type="button">Schließen</button><button class="btn" id="imp-go" type="button" disabled>Eintragen</button></div>
+  </div>
+</div>
+
+<!-- Anmeldung -->
+<div class="modal" id="auth" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="auth-h" style="width:min(420px,100%)">
+    <h2 id="auth-h">Horbach Lernstapel</h2>
+    <div class="hint" id="auth-info">Anmelden, damit dein Lernstand auf allen Geräten gleich ist. Die Karten teilen sich alle, der Fortschritt gehört dir.</div>
+    <form id="auth-form" autocomplete="on" style="display:grid;gap:10px" onsubmit="return false">
+      <div class="field"><label for="auth-mail">E-Mail</label><input class="in" id="auth-mail" name="username" type="email" autocomplete="username" inputmode="email"></div>
+      <div class="field"><label for="auth-pw">Passwort</label><input class="in" id="auth-pw" name="password" type="password" autocomplete="current-password"></div>
+    </form>
+    <div class="hint" id="auth-msg" style="min-height:18px"></div>
+    <div class="acts"><button class="btn" id="auth-in" type="button">Anmelden</button><button class="btn plain" id="auth-up" type="button">Konto anlegen</button><span class="sp"></span><button class="linkbtn" id="auth-reset" type="button">Passwort vergessen</button></div>
+  </div>
+</div>
+<div class="modal" id="pwmodal" hidden>
+  <form class="sheet" id="pw-form" style="width:min(420px,100%)" autocomplete="on">
+    <h2>Neues Passwort</h2>
+    <div class="field"><label for="pw-new">Neues Passwort (mindestens 6 Zeichen)</label><input class="in" id="pw-new" type="password" autocomplete="new-password" minlength="6" required></div>
+    <div class="acts"><span class="sp"></span><button class="btn" type="submit">Passwort setzen</button></div>
+  </form>
+</div>
+
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script src="sb.js"></script>
+<script>
+(function(){
+'use strict';
+var SB_URL='https://uoqlzbpeizqethvfugvv.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvcWx6YnBlaXpxZXRodmZ1Z3Z2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5MzIwNjEsImV4cCI6MjEwNjUwODA2MX0.sT4k1Ai2NYZwILi3gjOyxTYLNRK7Y6d-544OlqlCgQE';
+var SEED=[{"id": "VK01", "deck": "Vertriebskreislauf", "topic": "Überblick", "type": "order", "prio": 1, "q": "Bring den Vertriebskreislauf in die richtige Reihenfolge.", "a": "", "cloze": "", "items": ["Akquise", "TTV", "Grundberatung (GB)", "Dienstleistungsvorstellung", "Fachliche Themen", "Finanzplan erstellen", "Konzeptbesprechung", "Abschlusstermin", "Service"], "note": "", "src": "Aufschrieb 02.10.2026", "order": 1}, {"id": "VK02", "deck": "Vertriebskreislauf", "topic": "Überblick", "type": "flip", "prio": 1, "q": "Welcher Schritt ist der erste Kontakt mit HORBACH?", "a": "**TTV**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 2}, {"id": "VK03", "deck": "Vertriebskreislauf", "topic": "Überblick", "type": "flip", "prio": 1, "q": "Was kommt direkt nach der Grundberatung?", "a": "**Dienstleistungsvorstellung**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 3}, {"id": "VK04", "deck": "Vertriebskreislauf", "topic": "Überblick", "type": "flip", "prio": 2, "q": "Was kommt direkt vor dem Finanzplan?", "a": "**Fachliche Themen**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 4}, {"id": "VK05", "deck": "Vertriebskreislauf", "topic": "Überblick", "type": "flip", "prio": 1, "q": "Was kommt direkt nach der Konzeptbesprechung?", "a": "**Abschlusstermin**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 5}, {"id": "VK06", "deck": "Vertriebskreislauf", "topic": "Überblick", "type": "flip", "prio": 2, "q": "Was ist im Optimalfall das Ende des Kreislaufs?", "a": "**Empfehlung vom Kunden**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 6}, {"id": "VK07", "deck": "Vertriebskreislauf", "topic": "Akquise", "type": "flip", "prio": 3, "q": "Welche Leitfrage steht hinter der Akquise?", "a": "**Wie komme ich an neue potenzielle Mandanten?**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 7}, {"id": "VK08", "deck": "Vertriebskreislauf", "topic": "Akquise", "type": "flip", "prio": 1, "q": "Über welche drei Wege läuft die Akquise?", "a": "- Direktakquise\n- Kooperationen\n- Online-Neukundengewinnung (TTV)", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 8}, {"id": "VK09", "deck": "Vertriebskreislauf", "topic": "Akquise", "type": "cloze", "prio": 2, "q": "Beispiele für die Akquise-Wege:", "a": "", "cloze": "Direktakquise findet an {{öffentlichen Plätzen|öffentliche Plätze}} statt. Ein Beispiel für eine Kooperation ist ein Seminar auf einer {{Absolventenfeier}}.", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 9}, {"id": "VK10", "deck": "Vertriebskreislauf", "topic": "TTV", "type": "cloze", "prio": 2, "q": "Dauer des TTV:", "a": "", "cloze": "Das TTV dauert {{5}} bis {{15}} Minuten.", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 10}, {"id": "VK11", "deck": "Vertriebskreislauf", "topic": "TTV", "type": "flip", "prio": 1, "q": "Welche vier Punkte klärst du im TTV?", "a": "- Wer sind wir und was machen wir?\n- Bezug erklären\n- Was würde die Person in einem Gespräch erwarten?\n- Welche Vorteile bietet das kostenlose Beratungsgespräch?", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 11}, {"id": "VK12", "deck": "Vertriebskreislauf", "topic": "TTV", "type": "flip", "prio": 2, "q": "Was prüfst du im TTV beim Gewinnspiel?", "a": "- Bestätigung des Gewinnspiels\n- Abgleich der Daten\n- Echter Mensch?\n\n→ Ist der Kontakt **qualifiziert**?", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 12}, {"id": "VK13", "deck": "Vertriebskreislauf", "topic": "TTV", "type": "flip", "prio": 1, "q": "Was bekommt der Kontakt zusätzlich zum Gewinnspiel angeboten?", "a": "Die **Chance auf eine kostenlose Grundberatung** bzw. einen Beratungstermin.", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 13}, {"id": "VK14", "deck": "Vertriebskreislauf", "topic": "TTV", "type": "cloze", "prio": 2, "q": "Akademiker-Gewinnspiel:", "a": "", "cloze": "„Ausgewählten {{Akademikern}} die Chance geben, eine {{kostenlose}} {{Grundberatung}} zu erhalten.“", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 14}, {"id": "VK15", "deck": "Vertriebskreislauf", "topic": "Grundberatung", "type": "flip", "prio": 3, "q": "Wie wird die Grundberatung noch beschrieben?", "a": "**„Bestellungsaufnahme beim Kunden“**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 15}, {"id": "VK16", "deck": "Vertriebskreislauf", "topic": "Grundberatung", "type": "cloze", "prio": 2, "q": "Dauer der Grundberatung:", "a": "", "cloze": "Die GB dauert {{1–1,5|1-1,5|1 bis 1,5|1-1.5}} Stunden.", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 16}, {"id": "VK17", "deck": "Vertriebskreislauf", "topic": "Grundberatung", "type": "flip", "prio": 1, "q": "Welche fünf Inhalte hat die Grundberatung?", "a": "- Bestandsanalyse\n- Ziele und Wünsche des Kunden\n- Wo soll es später finanziell hingehen?\n- Gemeinsam identifizieren, wie die Dienstleistung helfen kann\n- Bindung und Sympathie aufbauen", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 17}, {"id": "VK18", "deck": "Vertriebskreislauf", "topic": "Grundberatung", "type": "cloze", "prio": 2, "q": "Kernsatz der Grundberatung:", "a": "", "cloze": "„Gemeinsam {{identifizieren}}, wie unsere Dienstleistung in der Situation des Kunden {{behilflich}} sein kann.“", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 18}, {"id": "VK19", "deck": "Vertriebskreislauf", "topic": "Beratung", "type": "flip", "prio": 1, "q": "Wozu muss der Kunde bei der Dienstleistungsvorstellung Ja sagen?", "a": "**Ja zum Berater** und **Ja zur Dienstleistung**. Erst dann geht es an die fachlichen Themen.", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 19}, {"id": "VK20", "deck": "Vertriebskreislauf", "topic": "Beratung", "type": "flip", "prio": 2, "q": "Was passiert bei den fachlichen Themen?", "a": "- Konkret Produkte durchgehen, die in der Situation des Kunden relevant sein könnten\n- Erklären, warum ein Produkt in seiner Lebenssituation Sinn macht", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 20}, {"id": "VK21", "deck": "Vertriebskreislauf", "topic": "Beratung", "type": "flip", "prio": 2, "q": "Was passiert, wenn der Finanzplan erstellt wird?", "a": "- Aufarbeitung der **gesamten** finanziellen Situation\n- Passende Konzepte werden vorbereitet", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 21}, {"id": "VK22", "deck": "Vertriebskreislauf", "topic": "Beratung", "type": "flip", "prio": 1, "q": "Was passiert in der Konzeptbesprechung?", "a": "- Empfehlung vorlegen, Finanzkonzept besprechen\n- ggf. 2 Optionen\n- ggf. nachjustieren\n- Kunde bekommt alles schwarz auf weiß", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 22}, {"id": "VK23", "deck": "Vertriebskreislauf", "topic": "Beratung", "type": "flip", "prio": 2, "q": "Warum bekommt der Kunde nach der Konzeptbesprechung alles schwarz auf weiß?", "a": "Damit er **eine Nacht drüber schlafen** kann.", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 23}, {"id": "VK24", "deck": "Vertriebskreislauf", "topic": "Beratung", "type": "flip", "prio": 2, "q": "Was passiert im Abschlusstermin?", "a": "**Verträge werden signiert.**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 24}, {"id": "VK25", "deck": "Vertriebskreislauf", "topic": "Service", "type": "cloze", "prio": 2, "q": "Servicetermin:", "a": "", "cloze": "Der Service findet {{einmal|1x|1×|1}} jährlich statt. Leitfrage: Wo stehen wir in Bezug auf die {{finanziellen Ziele}}?", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 25}, {"id": "VK26", "deck": "Vertriebskreislauf", "topic": "Service", "type": "flip", "prio": 2, "q": "Welche drei Dinge gehören zum Service?", "a": "- Standortbestimmung: Wo stehen wir bei den finanziellen Zielen?\n- Portfoliopflege\n- Im Optimalfall: Empfehlung vom Kunden", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 26}, {"id": "VK27", "deck": "Vertriebskreislauf", "topic": "Formel & Wortschatz", "type": "flip", "prio": 1, "q": "Wofür steht E = Q × A?", "a": "**Erfolg = Qualität × Aktivität**", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 27}, {"id": "VK28", "deck": "Vertriebskreislauf", "topic": "Formel & Wortschatz", "type": "cloze", "prio": 1, "q": "Ergänze den Wortschatz-Satz.", "a": "", "cloze": "„Als Teil unserer {{zeitlich begrenzten}} Marketingaktion geben wir {{ausgewählten}} Akademikern die Gelegenheit, unsere Dienstleistung {{kostenlos}} kennenzulernen.“", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 28}, {"id": "VK29", "deck": "Vertriebskreislauf", "topic": "Formel & Wortschatz", "type": "explain", "prio": 1, "q": "Sag den Marketingaktion-Satz komplett auswendig auf.", "a": "„Als Teil unserer zeitlich begrenzten Marketingaktion geben wir ausgewählten Akademikern die Gelegenheit, unsere Dienstleistung kostenlos kennenzulernen.“", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 29}, {"id": "VK30", "deck": "Vertriebskreislauf", "topic": "Anwenden", "type": "case", "prio": 2, "q": "Du rufst eine Gewinnspiel-Teilnehmerin an. Wie läuft das Gespräch ab?", "a": "Aus deinen Notizen:\n- Gewinnspiel bestätigen, Daten abgleichen\n- Wer sind wir, was machen wir, Bezug erklären\n- Chance auf kostenlose Grundberatung anbieten\n- Erklären, was sie im Gespräch erwartet und welche Vorteile es hat\n- Ziel: Termin für die Grundberatung, 5–15 Minuten\n\nDie Reihenfolge steht so nicht im Aufschrieb – mit Coach oder Gesprächsleitfaden abgleichen.", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 30}, {"id": "VK31", "deck": "Vertriebskreislauf", "topic": "Anwenden", "type": "case", "prio": 2, "q": "Nach der Konzeptbesprechung sagt der Kunde: „Ich muss mir das nochmal überlegen.“ Was nun?", "a": "Laut deinen Notizen ist das so vorgesehen:\n- Er bekommt alles schwarz auf weiß und kann eine Nacht drüber schlafen\n- Ggf. nachjustieren\n- Danach folgt der Abschlusstermin", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 31}, {"id": "VK32", "deck": "Vertriebskreislauf", "topic": "Anwenden", "type": "explain", "prio": 2, "q": "Erkläre einem neuen Kollegen den Vertriebskreislauf in eigenen Worten, von der Akquise bis zur Empfehlung.", "a": "Neue Kontakte über Direktakquise, Kooperationen oder online. Im TTV (5–15 Min.) erster Kontakt und Termin für die kostenlose Grundberatung. In der GB (1–1,5 h) Bestand, Ziele und Wünsche aufnehmen und Sympathie aufbauen. Sagt der Kunde Ja zu Berater und Dienstleistung, geht es in die fachlichen Themen, dann wird der Finanzplan erstellt und in der Konzeptbesprechung vorgestellt. Nach einer Nacht Bedenkzeit folgt der Abschlusstermin. Danach jährlicher Service – im Optimalfall mit Empfehlung, die den Kreislauf neu startet.", "cloze": "", "items": [], "note": "", "src": "Aufschrieb 02.10.2026", "order": 32}];
+var $=function(s){return document.getElementById(s);};
+var DAY=864e5;
+var TYPES={flip:'Frage & Antwort',cloze:'Lückentext',order:'Reihenfolge',explain:'Erklären',case:'Fallkarte'};
+var PRIO={1:{l:'Muss',f:0.8},2:{l:'Gut zu wissen',f:1},3:{l:'Kennen',f:1.5}};
+var CARD_KEYS=['deck','topic','type','prio','q','a','cloze','items','note','src','order'];
+var PROG_KEYS=['due','ivl','ease','reps','lapses','seen'];
+
+/* ---------- Zustand ---------- */
+var S={cards:new Map(),deck:'Alle',prio:'all',lprio:'all',search:'',queue:[],idx:0,done:0,total:0,cram:false,newLimit:20,editing:null,started:false};
+var sb=null,user=null,mode='loading',pending=0,offline=false,chan=null,pollT=null,loaded=false;
+try{var nl=localStorage.getItem('lernstapel.newlimit');if(nl)S.newLimit=+nl;}catch(e){}
+$('newlimit').value=String(S.newLimit);
+
+/* ---------- Helfer ---------- */
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function inl(s){return esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');}
+function md(t){var out=[],list=null;String(t||'').split('\n').forEach(function(line){var l=line.trim();var m=l.match(/^(-|\d+\.)\s+(.*)$/);
+  if(m){var tag=m[1]==='-'?'ul':'ol';if(!list||list.tag!==tag){if(list)out.push('</'+list.tag+'>');list={tag:tag};out.push('<'+tag+'>');}out.push('<li>'+inl(m[2])+'</li>');}
+  else{if(list){out.push('</'+list.tag+'>');list=null;}if(l)out.push('<p>'+inl(l)+'</p>');}});if(list)out.push('</'+list.tag+'>');return '<div class="md">'+out.join('')+'</div>';}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function endOfToday(){var d=new Date();d.setHours(23,59,59,999);return d.getTime();}
+function startOfToday(){var d=new Date();d.setHours(0,0,0,0);return d.getTime();}
+function uid(){return 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function toast(t){var el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){el.hidden=true;},2600);}
+function norm(id,v){v=v||{};var t=TYPES[v.type]?v.type:'flip';var p=[1,2,3].indexOf(+v.prio)>=0?+v.prio:2;
+  return {id:id,deck:String(v.deck||'Ohne Stapel').slice(0,60),topic:String(v.topic||'').slice(0,60),type:t,prio:p,
+    q:String(v.q||''),a:String(v.a||''),cloze:String(v.cloze||''),items:Array.isArray(v.items)?v.items.map(String).filter(Boolean):[],
+    note:String(v.note||''),src:String(v.src||''),order:typeof v.order==='number'?v.order:(+v.sort_order||0),
+    due:+v.due||0,ivl:+v.ivl||0,ease:+v.ease||2.5,reps:+v.reps||0,lapses:+v.lapses||0,seen:String(v.seen||'')};}
+function sortCards(a,b){return a.deck.localeCompare(b.deck)||(a.order-b.order)||a.id.localeCompare(b.id);}
+function all(){return Array.from(S.cards.values()).sort(sortCards);}
+
+/* ---------- Speichern (Supabase) ---------- */
+function setStatus(){var el=$('status'),t='';el.className='status';
+  if(mode==='live'){el.classList.add(offline?'local':'live');t=offline?'Offline':(pending?'Speichert …':'Gespeichert');}
+  else if(mode==='auth')t='Nicht angemeldet';else t='Verbinde …';
+  el.querySelector('span').textContent=t;$('offbanner').hidden=!(mode==='live'&&offline);$('logout').hidden=!user;}
+function cardRow(c){return {id:c.id,deck:c.deck,topic:c.topic,type:c.type,prio:c.prio,q:c.q,a:c.a,cloze:c.cloze,items:c.items,note:c.note,src:c.src,sort_order:c.order,updated_at:new Date().toISOString()};}
+function progRow(c){return {user_id:user.id,card_id:c.id,due:c.due,ivl:c.ivl,ease:c.ease,reps:c.reps,lapses:c.lapses,seen:c.seen,updated_at:new Date().toISOString()};}
+var retry=[];
+function run(label,fn){pending++;setStatus();
+  return fn().then(function(r){if(r&&r.error)throw r.error;pending--;offline=false;setStatus();},
+    function(e){pending--;var t=String(e&&e.message||e);if(/Failed to fetch|NetworkError|Load failed/i.test(t)){offline=true;retry.push(fn);}else toast(label+' ging nicht: '+t.slice(0,80));setStatus();});}
+function flushRetry(){if(!retry.length||!user)return;var r=retry;retry=[];r.forEach(function(fn){run('Speichern',fn);});}
+function writeCard(c){S.cards.set(c.id,c);if(!sb||!user)return;var row=cardRow(c);run('Speichern',function(){return sb.from('lern_cards').upsert(row,{onConflict:'id'});});}
+function writeProgress(c){S.cards.set(c.id,c);if(!sb||!user)return;var row=progRow(c);run('Speichern',function(){return sb.from('lern_progress').upsert(row,{onConflict:'user_id,card_id'});});}
+function remove(id){S.cards.delete(id);if(!sb||!user)return;run('Löschen',function(){return sb.from('lern_cards').delete().eq('id',id);});}
+function mergeRows(cards,prog){var m=new Map();var pm={};(prog||[]).forEach(function(p){pm[p.card_id]=p;});
+  (cards||[]).forEach(function(r){var c=norm(r.id,r);var p=pm[r.id];if(p){PROG_KEYS.forEach(function(k){c[k]=p[k]==null?c[k]:p[k];});c.due=+c.due||0;c.ease=+c.ease||2.5;}m.set(c.id,c);});return m;}
+function load(){if(!sb||!user)return Promise.resolve();
+  return Promise.all([sb.from('lern_cards').select('*'),sb.from('lern_progress').select('*').eq('user_id',user.id)]).then(function(rs){
+    if(rs[0].error)throw rs[0].error;if(rs[1].error)throw rs[1].error;
+    if(pending)return;var m=mergeRows(rs[0].data,rs[1].data);S.cards=m;loaded=true;mode='live';offline=false;setStatus();refresh();},
+  function(e){var t=String(e&&e.message||e);if(/Failed to fetch|NetworkError|Load failed/i.test(t)){offline=true;}else toast('Laden ging nicht: '+t.slice(0,80));mode='live';setStatus();if(!loaded){loaded=true;refresh();}});}
+var reloadT=null;function scheduleReload(){clearTimeout(reloadT);reloadT=setTimeout(function(){if(!pending)load();else scheduleReload();},400);}
+function connect(){disconnect();load();
+  chan=sb.channel('lern-'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'lern_cards'},scheduleReload)
+    .on('postgres_changes',{event:'*',schema:'public',table:'lern_progress',filter:'user_id=eq.'+user.id},scheduleReload).subscribe();
+  pollT=setInterval(function(){if(document.visibilityState==='visible'){flushRetry();if(!pending)load();}},45000);}
+function disconnect(){if(chan){sb.removeChannel(chan);chan=null;}clearInterval(pollT);}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&user){flushRetry();if(!pending)load();}});
+
+/* ---------- Wiederholungsplan ---------- */
+function next(c,r){var ivl=c.ivl,ease=c.ease,isNew=!c.reps||!ivl,f=PRIO[c.prio].f;
+  if(r===0)return {ivl:0,ease:Math.max(1.3,ease-0.2),due:Date.now()+60e3,lapse:ivl>0};
+  if(r===1){ivl=isNew?1:Math.max(1,ivl*1.2);ease=Math.max(1.3,ease-0.15);}
+  else if(r===2){ivl=isNew?1:ivl*ease;}
+  else{ivl=isNew?3:ivl*ease*1.3;ease=ease+0.15;}
+  ivl=Math.max(1,Math.round(ivl*f));return {ivl:ivl,ease:ease,due:startOfToday()+ivl*DAY+6*36e5};}
+function ivlLabel(o){if(!o.ivl)return '1 Min';if(o.ivl<30)return o.ivl+(o.ivl===1?' Tag':' Tage');var m=Math.round(o.ivl/30);return m+(m===1?' Monat':' Monate');}
+function apply(c,r){var o=next(c,r);var n=Object.assign({},c,{ivl:o.ivl,ease:Math.round(o.ease*100)/100,due:o.due,reps:c.reps+1,lapses:c.lapses+(o.lapse?1:0),seen:c.seen||todayStr()});writeProgress(n);return n;}
+function isDue(c){return c.reps>0&&c.due<=endOfToday();}
+function isNew(c){return !c.reps;}
+function introducedToday(){var t=todayStr(),n=0;S.cards.forEach(function(c){if(c.seen===t)n++;});return n;}
+function dueLabel(c){if(!c.reps)return 'neu';var d=Math.round((c.due-startOfToday())/DAY);if(c.due<=endOfToday())return 'heute';return d===1?'morgen':'in '+d+' T';}
+
+/* ---------- Filter ---------- */
+function decks(){var s=[];S.cards.forEach(function(c){if(s.indexOf(c.deck)<0)s.push(c.deck);});return s.sort();}
+function inFilter(c){if(S.deck!=='Alle'&&c.deck!==S.deck)return false;if(S.prio==='1')return c.prio===1;if(S.prio==='12')return c.prio<=2;return true;}
+function chips(el,list,cur,on){el.innerHTML='';list.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=x[1];b.setAttribute('aria-pressed',String(x[0]===cur));b.onclick=function(){on(x[0]);};el.appendChild(b);});}
+function renderFilters(){var ds=decks();if(S.deck!=='Alle'&&ds.indexOf(S.deck)<0)S.deck='Alle';
+  chips($('f-deck'),[['Alle','Alle']].concat(ds.map(function(d){return [d,d];})),S.deck,function(v){S.deck=v;startSession();});
+  chips($('f-prio'),[['all','Alles'],['12','Muss + Gut zu wissen'],['1','Nur Muss']],S.prio,function(v){S.prio=v;startSession();});
+  $('decks').innerHTML=ds.map(function(d){return '<option value="'+esc(d)+'">';}).join('');
+  var ts=[];S.cards.forEach(function(c){if(c.topic&&ts.indexOf(c.topic)<0)ts.push(c.topic);});$('topics').innerHTML=ts.map(function(d){return '<option value="'+esc(d)+'">';}).join('');
+  $('b-seed').hidden=!(loaded&&!S.cards.size);}
+function renderStats(){var due=0,nw=0,must=0,mustOk=0;S.cards.forEach(function(c){if(!inFilter(c))return;if(isDue(c))due++;if(isNew(c))nw++;if(c.prio===1){must++;if(c.ivl>=7)mustOk++;}});
+  $('s-due').textContent=due;var left=Math.max(0,S.newLimit-introducedToday());$('s-new').textContent=Math.min(nw,left)+(nw>left?' / '+nw:'');
+  $('s-must').textContent=must?Math.round(mustOk/must*100)+' %':'–';}
+
+/* ---------- Lernsitzung ---------- */
+function startSession(cram){S.cram=!!cram;var pool=all().filter(inFilter);
+  var byP=function(a,b){return a.prio-b.prio||a.due-b.due||sortCards(a,b);};
+  if(S.cram){S.queue=pool.filter(function(c){return c.prio===1||S.prio!=='all';}).sort(byP).map(function(c){return c.id;});}
+  else{var rev=pool.filter(isDue).sort(byP);var left=Math.max(0,S.newLimit-introducedToday());
+    var nw=pool.filter(isNew).sort(function(a,b){return a.prio-b.prio||sortCards(a,b);}).slice(0,left);S.queue=rev.concat(nw).map(function(c){return c.id;});}
+  S.idx=0;S.done=0;S.total=S.queue.length;renderFilters();renderStats();renderCard();}
+function refresh(){renderFilters();renderStats();renderList();
+  if(!S.started&&S.cards.size){S.started=true;startSession();return;}
+  if(!S.cards.size||$('stage').querySelector('.empty'))renderCard();else if(S.queue[S.idx]&&!S.cards.has(S.queue[S.idx]))renderCard();}
+function bar(){$('bar').style.width=(S.total?Math.min(1,S.done/S.total)*100:0)+'%';}
+function norm2(s){return String(s).toLowerCase().replace(/[„“"'.,×]/g,'').replace(/[–-]/g,'-').replace(/\s+/g,' ').trim();}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+function renderCard(){bar();var st=$('stage');
+  if(!S.cards.size){st.innerHTML='<div class="empty">'+(!loaded?'Karten werden geladen …':'Noch keine Karten. Unter „Karten“ kannst du die 32 Startkarten laden, eigene anlegen oder aus der KI einfügen.')+'</div>';return;}
+  while(S.idx<S.queue.length&&!S.cards.has(S.queue[S.idx]))S.idx++;
+  if(S.idx>=S.queue.length){var nx=null;S.cards.forEach(function(c){if(inFilter(c)&&c.reps&&c.due>endOfToday()&&(!nx||c.due<nx))nx=c.due;});
+    st.innerHTML='<div class="card done"><h2>'+(S.cram?'Extra-Runde fertig':'Für heute fertig')+'</h2><p class="hint">'+(nx?'Nächste Wiederholung: '+new Date(nx).toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'}):'')+'</p><div class="acts" style="justify-content:center"><button class="btn ghost" id="cram" type="button">Extra-Runde '+(S.prio==='all'?'Muss-Karten':'mit diesem Filter')+'</button></div><p class="hint">Die Extra-Runde ändert den Wiederholungsplan nicht.</p></div>';
+    $('cram').onclick=function(){startSession(true);};return;}
+  var c=S.cards.get(S.queue[S.idx]);
+  var h='<div class="card"><div class="ctop"><span class="l"><span class="ctype">'+TYPES[c.type]+'</span><span class="pr p'+c.prio+'">'+PRIO[c.prio].l+'</span>'+(S.cram?'<span>Extra</span>':'')+'</span><span>'+esc(c.deck)+(c.topic?' · '+esc(c.topic):'')+' · '+(S.idx+1)+'/'+S.queue.length+'</span></div>';
+  if(c.type==='cloze'){var k=0;h+='<div class="cq" style="font-weight:400">'+inl(c.q)+'</div><div class="cloze">'+esc(c.cloze).replace(/\{\{(.+?)\}\}/g,function(){return '<input class="blank" id="b'+(k)+'" autocomplete="off" aria-label="Lücke '+(++k)+'">';})+'</div>';}
+  else h+='<div class="cq">'+inl(c.q)+'</div>';
+  if(c.type==='order')h+='<div class="hint">Tippe die Schritte in der richtigen Reihenfolge an.</div><div class="order" id="ord"></div>';
+  if(c.type==='explain'||c.type==='case')h+='<textarea id="ans" placeholder="Deine Antwort in eigenen Worten …"></textarea>';
+  h+='<div class="acts" id="act"><button class="btn" id="reveal" type="button">'+(c.type==='cloze'||c.type==='order'?'Prüfen':'Antwort zeigen')+'</button></div><div id="res"></div>';
+  h+='<div class="cfoot"><button class="linkbtn" id="c-note" type="button">✎ Anmerkung'+(c.note?' (1)':'')+'</button><button class="linkbtn" id="c-edit" type="button">Karte bearbeiten</button><button class="linkbtn" id="c-skip" type="button">Überspringen</button></div><div class="note-in" id="noteBox" hidden><textarea id="noteTxt" style="min-height:60px" placeholder="z. B. Antwort stimmt nicht, lieber als Lückentext …">'+esc(c.note)+'</textarea><div><button class="btn ghost" id="noteSave" type="button">Anmerkung speichern</button></div></div></div>';
+  st.innerHTML=h;
+  if(c.type==='order')buildOrder(c);
+  $('reveal').onclick=function(){reveal(c);};
+  $('c-edit').onclick=function(){openEditor(c.id);};
+  $('c-skip').onclick=function(){S.queue.push(c.id);S.idx++;renderCard();};
+  $('c-note').onclick=function(){$('noteBox').hidden=false;$('noteTxt').focus();};
+  $('noteSave').onclick=function(){var cur=S.cards.get(c.id);if(!cur)return;writeCard(Object.assign({},cur,{note:$('noteTxt').value.trim()}));$('noteBox').hidden=true;$('c-note').textContent='✎ Anmerkung gespeichert';renderList();};
+}
+var picked=[];
+function buildOrder(c){var box=$('ord');picked=[];
+  shuffle(c.items).forEach(function(it){var b=document.createElement('button');b.type='button';b.innerHTML='<b></b><span>'+esc(it)+'</span>';b.dataset.v=it;
+    b.onclick=function(){var i=picked.indexOf(it);if(i>=0)picked.splice(i,1);else picked.push(it);
+      Array.prototype.forEach.call(box.children,function(x){var j=picked.indexOf(x.dataset.v);x.querySelector('b').textContent=j<0?'':j+1;});};box.appendChild(b);});}
+function reveal(c){var res=$('res'),extra='',score=null;
+  if(c.type==='cloze'){var ans=[];c.cloze.replace(/\{\{(.+?)\}\}/g,function(_,a){ans.push(a.split('|'));});var ok=0;
+    ans.forEach(function(al,i){var el=$('b'+i);if(!el)return;var g=al.some(function(v){return norm2(v)===norm2(el.value);});if(g)ok++;el.classList.add(g?'ok':'no');if(!g)el.value=al[0];el.disabled=true;});
+    extra='<div class="hint">'+ok+' von '+ans.length+' Lücken richtig.</div>';score=ok===ans.length?2:(ok?1:0);}
+  if(c.type==='order'){var ok2=0;Array.prototype.forEach.call($('ord').children,function(b){var r=c.items.indexOf(b.dataset.v),m=picked.indexOf(b.dataset.v);if(r===m)ok2++;b.classList.add(r===m?'ok':'no');b.disabled=true;});
+    extra='<div class="hint">'+ok2+' von '+c.items.length+' an der richtigen Stelle.</div><div class="ca"><ol>'+c.items.map(function(i){return '<li>'+esc(i)+'</li>';}).join('')+'</ol></div>';score=ok2===c.items.length?2:(ok2>=c.items.length/2?1:0);}
+  if(c.a&&c.type!=='order'&&c.type!=='cloze')extra+='<div class="ca">'+(c.type==='explain'||c.type==='case'?'<div class="hint">Musterantwort</div>':'')+md(c.a)+'</div>';
+  var R=[['Nochmal',0],['Schwer',1],['Gut',2],['Leicht',3]];
+  res.innerHTML=extra+'<div class="hint" style="margin:12px 0 6px">Wie gut saß es?'+(S.cram?' (Extra-Runde, ändert den Plan nicht)':'')+'</div><div class="rate">'+R.map(function(r){return '<button type="button" data-r="'+r[1]+'"'+(score===r[1]?' class="sug"':'')+'>'+r[0]+'<small>'+(S.cram?'':ivlLabel(next(c,r[1])))+'</small></button>';}).join('')+'</div>';
+  $('act').hidden=true;
+  res.querySelectorAll('.rate button').forEach(function(b){b.onclick=function(){rate(c,+b.dataset.r);};});}
+function rate(c,r){var cur=S.cards.get(c.id)||c;
+  if(r===0){S.queue.splice(Math.min(S.queue.length,S.idx+4),0,c.id);if(!S.cram)apply(cur,0);}
+  else{S.done++;if(!S.cram)apply(cur,r);}
+  S.idx++;renderStats();renderCard();renderList();}
+
+/* ---------- Kartenliste ---------- */
+function renderList(){
+  chips($('l-prio'),[['all','Alle Prios'],['1','Muss'],['2','Gut zu wissen'],['3','Kennen'],['note','Mit Anmerkung']],S.lprio,function(v){S.lprio=v;renderList();});
+  var q=S.search.toLowerCase(),list=all().filter(function(c){if(S.lprio==='note'&&!c.note)return false;if(/^[123]$/.test(S.lprio)&&c.prio!==+S.lprio)return false;
+    return !q||(c.q+' '+c.a+' '+c.cloze+' '+c.items.join(' ')+' '+c.topic+' '+c.note).toLowerCase().indexOf(q)>=0;});
+  if(!list.length){$('list').innerHTML='<div class="empty">'+(S.cards.size?'Keine Karte passt zur Suche.':(loaded?'Noch keine Karten.':'Karten werden geladen …'))+'</div>';return;}
+  var h='',deck=null,topic=null;list.forEach(function(c){if(c.deck!==deck){if(deck!==null)h+='</div>';deck=c.deck;topic=null;h+='<div class="grp"><h2>'+esc(deck)+'</h2>';}
+    if(c.topic!==topic){topic=c.topic;if(topic)h+='<h3>'+esc(topic)+'</h3>';}
+    h+='<div class="row"><button type="button" class="pr p'+c.prio+'" data-p="'+c.id+'" title="Prio ändern">'+PRIO[c.prio].l+'</button><div class="q" data-e="'+c.id+'" tabindex="0" role="button">'+inl(c.type==='cloze'&&!c.q?c.cloze:c.q)+'</div><div class="m">'+TYPES[c.type]+'<br>'+dueLabel(c)+(c.note?' · <span class="nt">✎</span>':'')+'</div></div>';});
+  $('list').innerHTML=h+'</div>';}
+$('list').addEventListener('click',function(e){var p=e.target.closest('[data-p]');if(p){var c=S.cards.get(p.dataset.p);if(c){writeCard(Object.assign({},c,{prio:c.prio%3+1}));renderList();renderStats();}return;}
+  var q=e.target.closest('[data-e]');if(q)openEditor(q.dataset.e);});
+$('list').addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.dataset.e)openEditor(e.target.dataset.e);});
+$('search').addEventListener('input',function(e){S.search=e.target.value;renderList();});
+$('b-seed').onclick=function(){if(!user)return;var t=Date.now();SEED.forEach(function(s){writeCard(norm(s.id,s));});toast('32 Startkarten eingetragen');refreshAfterEdit();};
+
+/* ---------- Editor ---------- */
+function showFields(){var t=$('ed-type').value;document.querySelectorAll('#ed-form [data-for]').forEach(function(el){el.hidden=el.dataset.for.split(' ').indexOf(t)<0;});}
+$('ed-type').onchange=showFields;
+function openEditor(id){var c=id?S.cards.get(id):null;S.editing=id||null;
+  $('ed-h').textContent=c?'Karte bearbeiten':'Neue Karte';
+  $('ed-deck').value=c?c.deck:(S.deck!=='Alle'?S.deck:(decks()[0]||''));$('ed-topic').value=c?c.topic:'';
+  $('ed-type').value=c?c.type:'flip';$('ed-prio').value=String(c?c.prio:2);$('ed-q').value=c?c.q:'';$('ed-a').value=c?c.a:'';
+  $('ed-cloze').value=c?c.cloze:'';$('ed-items').value=c?c.items.join('\n'):'';$('ed-note').value=c?c.note:'';
+  $('ed-sched').textContent=c?(c.reps?'Gelernt: '+c.reps+'× · nächste Wiederholung '+dueLabel(c)+' · Abstand '+c.ivl+' T':'Noch nicht gelernt'):'';
+  $('ed-del').hidden=!c;$('ed-reset').hidden=!c||!c.reps;showFields();$('ed').hidden=false;$('ed-q').focus();}
+function closeEditor(){$('ed').hidden=true;}
+$('ed-cancel').onclick=closeEditor;
+$('ed').addEventListener('click',function(e){if(e.target===$('ed'))closeEditor();});
+$('ed-form').addEventListener('submit',function(e){e.preventDefault();var base=S.editing?S.cards.get(S.editing):norm(uid(),{order:Date.now()});
+  var t=$('ed-type').value;var c=Object.assign({},base,{deck:$('ed-deck').value.trim()||'Ohne Stapel',topic:$('ed-topic').value.trim(),type:t,prio:+$('ed-prio').value,
+    q:$('ed-q').value.trim(),a:$('ed-a').value.trim(),cloze:$('ed-cloze').value.trim(),items:$('ed-items').value.split('\n').map(function(s){return s.trim();}).filter(Boolean),note:$('ed-note').value.trim()});
+  if(t==='cloze'&&!/\{\{.+?\}\}/.test(c.cloze)){toast('Im Lückentext fehlt eine Lücke mit {{ }}.');return;}
+  if(t==='order'&&c.items.length<2){toast('Für Reihenfolge mindestens zwei Schritte eintragen.');return;}
+  writeCard(c);closeEditor();toast(S.editing?'Gespeichert':'Karte angelegt');refreshAfterEdit(c.id);});
+var delArmed=false;
+$('ed-del').onclick=function(){if(!delArmed){delArmed=true;$('ed-del').textContent='Wirklich löschen?';setTimeout(function(){delArmed=false;$('ed-del').textContent='Löschen';},3000);return;}
+  delArmed=false;$('ed-del').textContent='Löschen';remove(S.editing);closeEditor();toast('Karte gelöscht');refreshAfterEdit();};
+$('ed-reset').onclick=function(){var c=S.cards.get(S.editing);if(!c)return;writeProgress(Object.assign({},c,{due:0,ivl:0,ease:2.5,reps:0,lapses:0,seen:''}));closeEditor();toast('Lernstand zurückgesetzt');refreshAfterEdit();};
+function refreshAfterEdit(id){renderFilters();renderStats();renderList();if(!S.started&&S.cards.size){S.started=true;startSession();return;}if(!$('p-learn').hidden){if(id&&S.queue[S.idx]===id)renderCard();else if(!S.queue.length||S.idx>=S.queue.length)startSession();}}
+$('b-new').onclick=function(){openEditor(null);};
+
+/* ---------- Aus KI einfügen ---------- */
+var PROMPT=['Mach aus meinem Aufschrieb Lernkarten. Ich lerne für den Einstieg als Finanzberater bei HORBACH.','',
+'Regeln:','- Pro Karte möglichst nur ein Fakt. Lange Listen aufteilen.','- Nur was im Aufschrieb steht. Nichts ergänzen, nichts „verbessern“.',
+'- Unklare Stellen (Abkürzungen, Widersprüche, Lücken) keine Karte, sondern in "unklar" aufschreiben.','- Offensichtliche Tippfehler still korrigieren.',
+'- Abläufe: eine Reihenfolge-Karte plus Einzelfragen wie „Was kommt nach X?“.','- Wörtliche Sätze (z. B. „Wortschatz“): als Lückentext und als Karte zum Auswendig-Aufsagen.',
+'- prio: 1 = Muss (Kernablauf, Kernbegriffe, wörtliche Sätze), 2 = Gut zu wissen (Zahlen, Beispiele, Details), 3 = Kennen (Hintergrund).','',
+'Kartentypen:','- flip: Frage q, Antwort a','- cloze: Aufgabe q, Text cloze mit Lücken {{Antwort}} oder {{Antwort|Alternative}}','- order: Aufgabe q, items = Schritte in richtiger Reihenfolge',
+'- explain: Erklär- oder Aufsage-Aufgabe q, Musterantwort a','- case: kurze Praxissituation q, Lösung aus dem Aufschrieb a','In a: Listen mit „- “ am Zeilenanfang, fett mit **so**.','',
+'Antworte NUR mit JSON in genau dieser Form, ohne weiteren Text:','{"cards":[{"topic":"…","type":"flip","prio":1,"q":"…","a":"…"},{"topic":"…","type":"cloze","prio":2,"q":"…","cloze":"… {{…}} …"},{"topic":"…","type":"order","prio":1,"q":"…","items":["…","…"]}],"unklar":["…"]}'].join('\n');
+var impData=null;
+function openImp(){$('imp-deck').value=S.deck!=='Alle'?S.deck:'';$('imp-text').value='';$('imp-prev').innerHTML='';$('imp-go').disabled=true;impData=null;$('imp').hidden=false;}
+$('b-imp').onclick=openImp;$('imp-cancel').onclick=function(){$('imp').hidden=true;};
+$('imp').addEventListener('click',function(e){if(e.target===$('imp'))$('imp').hidden=true;});
+$('imp-copy').onclick=function(){var t=PROMPT+'\n\nAufschrieb:\n';var m=$('imp-copymsg');
+  try{navigator.clipboard.writeText(t).then(function(){m.textContent='Kopiert.';},function(){m.textContent='Kopieren ging nicht.';});}catch(e){m.textContent='Kopieren ging nicht.';}};
+function parseImp(txt){var s=String(txt||'').trim();var a=s.indexOf('{'),b=s.lastIndexOf('}');var o=null;
+  if(a>=0&&b>a){try{o=JSON.parse(s.slice(a,b+1));}catch(e){}}
+  if(!o){var a2=s.indexOf('['),b2=s.lastIndexOf(']');if(a2>=0&&b2>a2){try{o={cards:JSON.parse(s.slice(a2,b2+1))};}catch(e){}}}
+  if(!o||!Array.isArray(o.cards))return null;
+  var cards=o.cards.map(function(v){return norm('x',v);}).filter(function(c){if(!c.q&&!c.cloze)return false;if(c.type==='cloze')return /\{\{.+?\}\}/.test(c.cloze);if(c.type==='order')return c.items.length>1;return !!c.a;});
+  return {cards:cards,unklar:Array.isArray(o.unklar)?o.unklar.map(String):[]};}
+function showImp(){var p=$('imp-prev');if(!impData){p.innerHTML=$('imp-text').value.trim()?'<p class="hint">Keine Karten erkannt. Die Antwort muss das JSON aus dem Prompt enthalten.</p>':'';$('imp-go').disabled=true;return;}
+  var n={1:0,2:0,3:0};impData.cards.forEach(function(c){n[c.prio]++;});
+  p.innerHTML='<p class="hint">'+impData.cards.length+' Karten erkannt · Muss '+n[1]+' · Gut zu wissen '+n[2]+' · Kennen '+n[3]+'</p><div class="prev">'+impData.cards.map(function(c){return '<div><span class="pr p'+c.prio+'">'+PRIO[c.prio].l+'</span><span>'+inl(c.q||c.cloze)+'</span></div>';}).join('')+'</div>'+
+    (impData.unklar.length?'<div class="note"><b>Unklar, keine Karte:</b><ul style="margin:4px 0;padding-left:18px">'+impData.unklar.map(function(u){return '<li>'+esc(u)+'</li>';}).join('')+'</ul></div>':'');
+  $('imp-go').disabled=!impData.cards.length;}
+$('imp-text').addEventListener('input',function(){impData=parseImp($('imp-text').value);showImp();});
+$('imp-go').onclick=function(){if(!impData)return;var deck=$('imp-deck').value.trim()||'Neuer Stapel',t=Date.now();
+  impData.cards.forEach(function(c,i){writeCard(Object.assign({},c,{id:uid()+i,deck:deck,order:t+i,src:'KI-Import '+new Date().toLocaleDateString('de-DE')}));});
+  $('imp').hidden=true;toast(impData.cards.length+' Karten in „'+deck+'“ eingetragen');impData=null;refreshAfterEdit();};
+
+/* ---------- Reiter & Aufschriebe ---------- */
+var tabs=Array.prototype.slice.call(document.querySelectorAll('[role=tab]'));
+tabs.forEach(function(t){t.addEventListener('click',function(){tabs.forEach(function(x){x.setAttribute('aria-selected',String(x===t));$(x.dataset.p).hidden=x!==t;});if(t.id==='t-cards')renderList();if(t.id==='t-learn'){if(S.started&&S.idx>=S.queue.length&&!S.cram)startSession();else renderCard();}});});
+$('newlimit').onchange=function(e){S.newLimit=+e.target.value;try{localStorage.setItem('lernstapel.newlimit',e.target.value);}catch(x){}startSession();};
+var sf=$('showfx');if(sf)sf.addEventListener('change',function(e){document.body.classList.toggle('show-fx',e.target.checked);});
+var qm=$('qmore');if(qm)qm.addEventListener('click',function(){var q=$('qlist');q.classList.toggle('open');qm.textContent=q.classList.contains('open')?'Weniger zeigen':'Alle zeigen';});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){$('ed').hidden=true;$('imp').hidden=true;}});
+
+/* ---------- Anmeldung ---------- */
+function authMsg(t,bad){var m=$('auth-msg');m.textContent=t||'';m.style.color=bad?'var(--warn)':'var(--muted)';}
+function showAuth(on){$('auth').hidden=!on;if(on)setTimeout(function(){$('auth-mail').focus();},30);}
+function authAction(kind){var mail=$('auth-mail').value.trim(),pw=$('auth-pw').value;if(!mail){authMsg('Bitte E-Mail eintragen.',true);return;}
+  if(kind!=='reset'&&pw.length<6){authMsg('Passwort braucht mindestens 6 Zeichen.',true);return;}authMsg('Moment …');
+  var here=location.href.split('#')[0],p;
+  if(kind==='in')p=sb.auth.signInWithPassword({email:mail,password:pw});
+  else if(kind==='up')p=sb.auth.signUp({email:mail,password:pw,options:{emailRedirectTo:here}}).then(function(r){if(r.error)throw r.error;authMsg(r.data.session?'Konto angelegt.':'Konto angelegt. Bitte den Bestätigungs-Link in deiner Mail klicken, dann hier anmelden.');return r;});
+  else p=sb.auth.resetPasswordForEmail(mail,{redirectTo:here}).then(function(r){if(r.error)throw r.error;authMsg('Mail zum Zurücksetzen ist raus.');return r;});
+  p.then(function(r){if(r&&r.error)throw r.error;}).catch(function(e){var t=String(e.message||e);
+    if(/Failed to fetch|NetworkError|Load failed/i.test(t))t='Keine Verbindung. Internet prüfen.';else if(/Invalid login/i.test(t))t='E-Mail oder Passwort stimmt nicht.';else if(/Email not confirmed/i.test(t))t='Bitte erst den Bestätigungs-Link in deiner Mail klicken.';else if(/rate limit/i.test(t))t='Zu viele Versuche. Kurz warten.';else if(/already registered/i.test(t))t='Dieses Konto gibt es schon. Bitte anmelden.';authMsg(t,true);});}
+$('auth-in').onclick=function(){authAction('in');};$('auth-up').onclick=function(){authAction('up');};$('auth-reset').onclick=function(){authAction('reset');};
+$('auth-pw').addEventListener('keydown',function(e){if(e.key==='Enter')authAction('in');});
+$('logout').onclick=function(){sb.auth.signOut();};
+$('pw-form').addEventListener('submit',function(e){e.preventDefault();var np=$('pw-new').value;if(np.length<6)return;
+  sb.auth.updateUser({password:np}).then(function(r){toast(r.error?'Passwort konnte nicht gesetzt werden.':'Passwort gesetzt.');$('pwmodal').hidden=true;});});
+function enterSession(u){$('auth-pw').value='';if(user&&user.id===u.id)return;user=u;S.cards=new Map();S.started=false;loaded=false;mode='loading';setStatus();showAuth(false);renderCard();connect();}
+function leaveSession(){disconnect();authMsg('');user=null;S.cards=new Map();S.started=false;loaded=false;mode='auth';setStatus();renderCard();renderList();showAuth(true);}
+
+/* ---------- Start ---------- */
+setStatus();renderCard();
+(function(){var ok=false;try{ok=!!(window.supabase&&window.supabase.createClient);}catch(e){}
+  if(!ok){mode='auth';setStatus();showAuth(true);authMsg('Verbindung zum Speicher-Dienst nicht geladen. Internet prüfen und neu laden.',true);return;}
+  sb=window.supabase.createClient(SB_URL,SB_KEY);
+  if(/type=recovery/.test(location.hash))setTimeout(function(){$('pwmodal').hidden=false;$('pw-new').focus();},400);
+  sb.auth.onAuthStateChange(function(ev,sess){if(sess&&sess.user)enterSession(sess.user);else if(ev==='SIGNED_OUT'||ev==='INITIAL_SESSION')leaveSession();});
+  if(location.hash&&/access_token|type=/.test(location.hash))setTimeout(function(){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}},1500);})();
+})();
+</script>
+</body>
+</html>
